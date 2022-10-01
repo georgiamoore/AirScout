@@ -1,10 +1,16 @@
 import type { NextPage } from 'next'
+import dynamic from 'next/dynamic';
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import Map, {Marker} from 'react-map-gl';
+import {Marker} from 'react-map-gl';
+const Map = dynamic(() => import("../components/Map"), {
+  loading: () => <p>Loading...</p>,
+  ssr: false
+});
 
 const Home: NextPage = () => {
+  
   return (
     <div className={styles.container}>
       <Head>
@@ -17,21 +23,23 @@ const Home: NextPage = () => {
         <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
-        <Map
+        <Map> <Marker longitude={-1.889054} latitude={52.486473} color="red" /></Map>
+        {/* <Map
         initialViewState={{
           latitude: 52.486473, 
           longitude: -1.889054,
           zoom: 16
         }}
+        reuseMaps
         style={{width: 800, height: 600}}
         mapStyle="mapbox://styles/mapbox/streets-v11"
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
       >
         <Marker longitude={-1.889054} latitude={52.486473} color="red" />
       </Map>
-  
+   */}
         <p className={styles.description}>
-          {process.env.NEXT_PUBLIC_MAPBOX_TOKEN}Get started by editing{' '}
+          Get started by editing{' '}
           <code className={styles.code}>pages/index.tsx</code>
         </p>
 
