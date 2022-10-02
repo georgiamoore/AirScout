@@ -1,16 +1,33 @@
-import type { NextPage } from 'next'
-import dynamic from 'next/dynamic';
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
-import {Marker} from 'react-map-gl';
+import type { NextPage } from "next";
+import dynamic from "next/dynamic";
+import Head from "next/head";
+import Image from "next/image";
+import styles from "../styles/Home.module.css";
+import { Marker, Popup } from "react-map-gl";
+import { useState, useEffect } from "react";
+import React from "react";
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => <p>Loading...</p>,
-  ssr: false
+  ssr: false,
 });
+const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/greggs.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&bbox=-1.907158%2C52.472952%2C-1.875916%2C52.490725&limit=10`;
+// const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/greggs.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&bbox=-1.892138%2C52.482127%2C-1.884756%2C52.490071&limit=10`
 
 const Home: NextPage = () => {
-  
+  const [locations, setLocations] = useState([]);
+  const [showPopup, setShowPopup] = useState(true);
+  useEffect(() => {
+    const fetchLocations = async () => {
+      await fetch(url)
+        .then((response) => response.text())
+        .then((res) => JSON.parse(res))
+        .then((json) => {
+          setLocations(json.features);
+        })
+        .catch((err) => console.log({ err }));
+    };
+    fetchLocations();
+  }, []);
   return (
     <div className={styles.container}>
       <Head>
@@ -23,23 +40,10 @@ const Home: NextPage = () => {
         <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
-        <Map> <Marker longitude={-1.889054} latitude={52.486473} color="red" /></Map>
-        {/* <Map
-        initialViewState={{
-          latitude: 52.486473, 
-          longitude: -1.889054,
-          zoom: 16
-        }}
-        reuseMaps
-        style={{width: 800, height: 600}}
-        mapStyle="mapbox://styles/mapbox/streets-v11"
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-      >
-        <Marker longitude={-1.889054} latitude={52.486473} color="red" />
-      </Map>
-   */}
+        <Map locations={locations} showPopup={showPopup} setShowPopup={setShowPopup} />
+        
         <p className={styles.description}>
-          Get started by editing{' '}
+          Get started by editing{" "}
           <code className={styles.code}>pages/index.tsx</code>
         </p>
 
@@ -80,14 +84,14 @@ const Home: NextPage = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
+          Powered by{" "}
           <span className={styles.logo}>
             <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
           </span>
         </a>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
