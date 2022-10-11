@@ -13,7 +13,9 @@ export async function getServerSideProps() {
       id: true,
       latitude: true,
       longitude: true,
-      pm10: true
+      pm10: true,
+      voc: true,
+      no2: true,
     },
     where: {
       latitude: { not: null },
@@ -21,12 +23,11 @@ export async function getServerSideProps() {
     },
     orderBy: {
       id: "desc"
-    },
-    take: 100
+    }
   })
 
-  const boundedData = await prisma.$queryRaw`SELECT id, latitude, longitude from plume_sensor 
-  where ST_Intersects(ST_MakeEnvelope(-2.175293, 52.277401, -1.576538, 52.608052), st_point(longitude, latitude)::geography);`;
+  // restricted to Birmingham
+  const boundedData = await prisma.$queryRaw`SELECT id, latitude, longitude, pm10, voc, no2 from plume_sensor where ST_Intersects(ST_MakeEnvelope(-2.175293, 52.277401, -1.576538, 52.608052), st_point(longitude, latitude)::geography)`;
   return {
     props: {plumeData}, // will be passed to the page component as props
   }
@@ -35,7 +36,7 @@ export async function getServerSideProps() {
 
 const formatSensorData = (data) => {
   // console.log(data.plumeData)
-  data.map((sensor) => {
+  let formatted = data.map((sensor) => {
     return {
       type: "Feature",
       geometry: { type: "Point", coordinates: [sensor.longitude, sensor.latitude] },
@@ -43,7 +44,7 @@ const formatSensorData = (data) => {
     }
   });
   // console.log(data)
-  return { type: "FeatureCollection", features: data };
+  return { type: "FeatureCollection", features: formatted };
   // return { type: "FeatureCollection", features: data };
 
 }
@@ -91,45 +92,9 @@ const Home: NextPage = ({plumeData}) => {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-        <Map locations={locations} showPopup={showPopup} setShowPopup={setShowPopup} />
-
-        <p className={styles.description}>
-          Get started by editing{" "}
-          <code className={styles.code}>pages/index.tsx</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
+        
+        <Map locations={locations}  />
+        
       </main>
 
       <footer className={styles.footer}>
