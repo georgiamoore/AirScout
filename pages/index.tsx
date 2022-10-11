@@ -6,6 +6,48 @@ import styles from "../styles/Home.module.css";
 import { Marker, Popup } from "react-map-gl";
 import { useState, useEffect } from "react";
 import React from "react";
+import prisma from '../lib/prisma';
+export async function getServerSideProps() {
+  const plumeData = await prisma.plume_sensor.findMany({
+    select: {
+      id: true,
+      latitude: true,
+      longitude: true,
+      pm10: true
+    },
+    where: {
+      latitude: { not: null },
+      longitude: { not: null },
+    },
+    orderBy: {
+      id: "desc"
+    },
+    take: 100
+  })
+
+  const boundedData = await prisma.$queryRaw`SELECT id, latitude, longitude from plume_sensor 
+  where ST_Intersects(ST_MakeEnvelope(-2.175293, 52.277401, -1.576538, 52.608052), st_point(longitude, latitude)::geography);`;
+  return {
+    props: {plumeData}, // will be passed to the page component as props
+  }
+}
+
+
+const formatSensorData = (data) => {
+  // console.log(data.plumeData)
+  data.map((sensor) => {
+    return {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [sensor.longitude, sensor.latitude] },
+      properties: { id: sensor.id, pm10: sensor.pm10 }
+    }
+  });
+  // console.log(data)
+  return { type: "FeatureCollection", features: data };
+  // return { type: "FeatureCollection", features: data };
+
+}
+
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -13,7 +55,7 @@ const Map = dynamic(() => import("../components/Map"), {
 const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/greggs.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&bbox=-1.907158%2C52.472952%2C-1.875916%2C52.490725&limit=10`;
 // const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/greggs.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&bbox=-1.892138%2C52.482127%2C-1.884756%2C52.490071&limit=10`
 
-const Home: NextPage = () => {
+const Home: NextPage = ({plumeData}) => {
   const [locations, setLocations] = useState([]);
   const [showPopup, setShowPopup] = useState(true);
   useEffect(() => {
@@ -25,8 +67,20 @@ const Home: NextPage = () => {
           setLocations(json.features);
         })
         .catch((err) => console.log({ err }));
+    //   await prisma.plume_sensor.findMany({
+    //     select: {
+    //       id: true,
+    //       latitude: true,
+    //       longitude: true,
+    //     },
+    //     orderBy: {
+    //       id: "desc"
+    //     }
+    //   }).then((res) => setLocations(formatSensorData(res).features))
     };
-    fetchLocations();
+    // fetchLocations();
+    console.log(plumeData)
+    setLocations(formatSensorData(plumeData))
   }, []);
   return (
     <div className={styles.container}>
@@ -41,7 +95,7 @@ const Home: NextPage = () => {
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
         <Map locations={locations} showPopup={showPopup} setShowPopup={setShowPopup} />
-        
+
         <p className={styles.description}>
           Get started by editing{" "}
           <code className={styles.code}>pages/index.tsx</code>

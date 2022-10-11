@@ -1,59 +1,53 @@
 import { PropsWithChildren, useEffect, useState } from "react";
-import ReactMapGL, { Marker, Popup, NavigationControl } from "react-map-gl";
+import ReactMapGL, { Marker, Popup, NavigationControl, Layer, Source } from "react-map-gl";
 const Map = ({ locations, showPopup, setShowPopup }) => {
-  console.log(locations);
-  console.log(showPopup);
-  const [selectedLocation, setSelectedLocation] = useState({});
-  return (
-    <ReactMapGL
-      initialViewState={{
-        latitude: 52.486473,
-        longitude: -1.889054,
-        zoom: 16,
-      }}
-      reuseMaps
-      style={{ width: 800, height: 600 }}
-      mapStyle="mapbox://styles/mapbox/streets-v11"
-      mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-    >
-      {showPopup && (
-        <Popup
-          longitude={-1.889054}
-          latitude={52.486473}
-          anchor="bottom"
-          onClose={() => {
-            console.log("closed");
-            setShowPopup(false);
-          }}
-        >
-          You are here
-        </Popup>
-      )}{" "}
-      {locations.map((location) => (
+
+  const layerStyle = {
+    id: 'point',
+    type: 'circle',
+    paint: {
+      'circle-radius': 100,
+      'circle-color': '#ff0000',
+    },
+    layout: {
+      // Make the layer visible by default.
+      'visibility': 'visible'
+    }
+    // 'source-layer': 'sensors'
+};
+
+return (
+  <ReactMapGL
+    initialViewState={{
+      latitude: 52.486473,
+      longitude: -1.889054,
+      zoom: 16,
+    }}
+    reuseMaps
+    style={{ width: 800, height: 600 }}
+    mapStyle="mapbox://styles/mapbox/streets-v11"
+    mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+  >
+
+    <Source id="sensors" type="vector"  url='mapbox://mapbox.2opop9hr'>
+      <Layer {...layerStyle} />
+    </Source>
+    {/* {locations.map((location) => (
         <div key={location.id}>
           <Marker
-            latitude={location.center[1]}
-            longitude={location.center[0]}
+            latitude={location.latitude}
+            longitude={location.longitude}
             onClick={() => {
               setSelectedLocation(location);
               console.log("click");
             }}
           ></Marker>
-          {selectedLocation.id === location.id && (
-            <Popup
-              onClose={() => setSelectedLocation({})}
-              closeOnClick={true}
-              latitude={location.center[1]}
-              longitude={location.center[0]}
-            >
-              {location.place_name}
-            </Popup>
-          )}
+        
         </div>
-      ))}
-      <NavigationControl />
-    </ReactMapGL>
-  );
+      ))} */}
+    <NavigationControl />
+  </ReactMapGL>
+);
 };
 
 export default Map;
