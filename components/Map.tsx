@@ -1,39 +1,6 @@
-import { PropsWithChildren, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import ReactMapGL, {
-  Marker,
-  Popup,
-  NavigationControl,
-  Layer,
-  Source,
-} from "react-map-gl";
-export async function getServerSideProps() {
-  const plumeData = [];
-  // const plumeData = await prisma.plume_sensor.findMany({
-  //   select: {
-  //     id: true,
-  //     latitude: true,
-  //     longitude: true,
-  //     pm10: true,
-  //     voc: true,
-  //     no2: true,
-  //   },
-  //   where: {
-  //     latitude: { not: null },
-  //     longitude: { not: null },
-  //   },
-  //   orderBy: {
-  //     id: "desc",
-  //   },
-  // });
-
-  // restricted to Birmingham
-  // const boundedData = await prisma.$queryRaw`SELECT id, latitude, longitude, pm10, voc, no2 from plume_sensor where ST_Intersects(ST_MakeEnvelope(-2.175293, 52.277401, -1.576538, 52.608052), st_point(longitude, latitude)::geography)`;
-  return {
-    props: { plumeData }, // will be passed to the page component as props
-  };
-}
 
 type PlumeData = {
   id: string;
@@ -70,21 +37,26 @@ const formatPlumeData = (data: PlumeData[]) => {
 };
 
 const formatWAQIData = (data) => {
+  console.log(data);
   let formatted = {
     type: "Feature",
     geometry: {
       type: "Point",
-      coordinates: [data.city.geo[0], data.city.geo[1]],
+      coordinates: [data.longitude, data.latitude],
     },
-    properties: { id: data.idx, pm10: data.iaqi.pm10.v, time: data.time },
+    // TODO idx below is an inappropriate ID -> refers to sensor station id rather than measurement id 
+    // (will be fixed during backend api dev)
+    properties: { id: data.idx, pm10: data.pm10, time: data.utc_date },
   };
 
   return { type: "FeatureCollection", features: [formatted] };
 };
 
-const Map = ({ plumeData }) => {
-  const [lng, setLng] = useState(-1.889054);
-  const [lat, setLat] = useState(52.486473);
+const Map = ({ plumeData, WAQIData }) => {
+  const [lng, setLng] = useState(-1.890401);
+  // const [lng, setLng] = useState(-1.889054); 
+  const [lat, setLat] = useState(52.486243);
+  // const [lat, setLat] = useState(52.486473);
   const [zoom, setZoom] = useState(14);
   const mapContainer = useRef<any>(null);
   const map = useRef<mapboxgl.Map | any>(null);
@@ -95,35 +67,30 @@ const Map = ({ plumeData }) => {
       data: FeatureCollection;
     }[]
   >([]);
+
   useEffect(() => {
-    const fetchLocations = async () => {
-      const waqiUrl = `https://api.waqi.info/feed/birmingham/?token=${process.env.NEXT_PUBLIC_AQICN_TOKEN}`;
-      // const waqiUrl = `https://api.waqi.info/map/bounds?token=${process.env.NEXT_PUBLIC_AQICN_TOKEN}&latlng=-2.041397,52.386497,-1.725540,52.563830`;
-      await fetch(waqiUrl)
-        .then((response) => response.text())
-        .then((res) => JSON.parse(res))
-        .then((json) => {
-          console.log(json);
-          // console.log(formatWAQIData(json.data))
-          setLocations((prevLocations) => [
-            ...prevLocations,
-            { source: "waqi", data: formatWAQIData(json.data) },
-          ]);
-          // setLocations((prevLocations) => [
-          //   ...prevLocations,
-          //   { source: "plume", data: formatPlumeData(plumeData) },
-          // ]);
-        })
-        .catch((err) => console.log({ err }));
-    };
-    fetchLocations();
-  }, []);
+    if (locations.length == 0) {
+      setLocations(
+        [{ source: "waqi", data: formatWAQIData(WAQIData) },
+        { source: "plume", data: formatPlumeData(plumeData.plumeData) }]
+      );
+    }
+  }, [WAQIData, locations.length, plumeData.plumeData]);
+
+  // useEffect(() => {
+  //   console.log(plumeData.plumeData);
+  //   setLocations((prevLocations) => [
+  //     ...prevLocations,
+  //     { source: "plume", data: formatPlumeData(plumeData.plumeData) },
+  //   ]);
+  // }, [plumeData.plumeData]);
+
   useEffect(() => {
     if (map.current) return;
-    if (locations.length<1) return;
+    if (locations.length < 1) return;
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v11",
+      style: "mapbox://styles/mapbox/streets-v12",
       center: [lng, lat],
       zoom: zoom,
     });
@@ -131,90 +98,113 @@ const Map = ({ plumeData }) => {
       console.log(locations);
       locations.map((featureCollection) => {
         console.log(featureCollection);
-        map.current.addSource(featureCollection.source, {
-          type: "geojson",
-          data: featureCollection.data,
-          // cluster: true,
-          // clusterMaxZoom: 14, // Max zoom to cluster points on
-          // clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+        console.log(featureCollection.data);
+        if (!map.current.getSource(featureCollection.source)) {
+          map.current.addSource(featureCollection.source, {
+            type: "geojson",
+            data: featureCollection.data,
+            // cluster: true,
+            // clusterMaxZoom: 14, // Max zoom to cluster points on
+            // clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+          });
+        } else {
+          // source already exists, overwrite feature data
+          map.current
+            .getSource(featureCollection.source)
+            .setData(featureCollection.data);
+        }
+        // map.current.addLayer({
+        //   id: "gen"+featureCollection.source,
+        //   type: "circle",
+        //   source: featureCollection.source,
+        //   layout: {
+        //     visibility: "visible",
+        //   },
+        // });
+
+        map.current.addLayer({ //TODO fsr waqi data isn't showing up on this layer
+          id: "pm10"+featureCollection.source,
+          type: "circle",
+          source: featureCollection.source, 
+          filter: ["has", "pm10"],
+          paint: {
+            "circle-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "pm10"],
+              20,
+              "rgba(33,102,172,0)",
+              40,
+              "rgb(103,169,207)",
+              60,
+              "rgb(253,219,199)",
+              80,
+              "rgb(178,24,43)",
+            ],
+          },
+          layout: {
+            visibility: "visible",
+          },
+        });
+
+        //TODO broken(?)
+        map.current.addLayer({
+          id: "voc"+featureCollection.source,
+          type: "circle",
+          source: featureCollection.source,
+          filter: ["has", "voc"],
+          paint: {
+            "circle-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "voc"],
+              80,
+              "rgba(33,102,172,0)",
+              90,
+              "rgb(103,169,207)",
+              100,
+              "rgb(253,219,199)",
+              110,
+              "rgb(178,24,43)",
+            ],
+          },
+          layout: {
+            visibility: "visible",
+          },
+        });
+  
+        //TODO broken(?)
+        map.current.addLayer({
+          id: "no2"+featureCollection.source,
+          type: "circle",
+          source: featureCollection.source,
+          filter: ["has", "no2"],
+          paint: {
+            "circle-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "no2"],
+              80,
+              "rgba(33,102,172,0)",
+              90,
+              "rgb(103,169,207)",
+              100,
+              "rgb(253,219,199)",
+              110,
+              "rgb(178,24,43)",
+            ],
+          },
+          layout: {
+            visibility: "visible",
+          },
         });
       });
-
-      map.current.addLayer({
-        id: "pm10",
-        type: "circle",
-        source: "waqi", //todo replace
-        filter: ["has", "pm10"],
-        paint: {
-          "circle-color": [
-            "interpolate",
-            ["linear"],
-            ["get", "pm10"],
-            20,
-            "rgba(33,102,172,0)",
-            40,
-            "rgb(103,169,207)",
-            60,
-            "rgb(253,219,199)",
-            80,
-            "rgb(178,24,43)",
-          ],
-        },
-        layout: {
-          visibility: "visible",
-        },
       });
-      map.current.addLayer({
-        id: "voc",
-        type: "circle",
-        source: "waqi", //todo replace
-        filter: ["has", "voc"],
-        paint: {
-          "circle-color": [
-            "interpolate",
-            ["linear"],
-            ["get", "voc"],
-            80,
-            "rgba(33,102,172,0)",
-            90,
-            "rgb(103,169,207)",
-            100,
-            "rgb(253,219,199)",
-            110,
-            "rgb(178,24,43)",
-          ],
-        },
-        layout: {
-          visibility: "visible",
-        },
-      });
+      
 
-      map.current.addLayer({
-        id: "no2",
-        type: "circle",
-        source: "waqi", //todo replace
-        filter: ["has", "no2"],
-        paint: {
-          "circle-color": [
-            "interpolate",
-            ["linear"],
-            ["get", "no2"],
-            80,
-            "rgba(33,102,172,0)",
-            90,
-            "rgb(103,169,207)",
-            100,
-            "rgb(253,219,199)",
-            110,
-            "rgb(178,24,43)",
-          ],
-        },
-        layout: {
-          visibility: "visible",
-        },
-      });
-    });
-
+      // TODO this toggle menu is defunct for now, needs to be rewritten
+      // sensor types (e.g. plume/waqi) need to be combined
+      // e.g. toggle pm10 view for all pm10 layers (rather than by sensor type)
     map.current.on("idle", () => {
       // If these two layers were not added to the map, abort
       if (
@@ -283,14 +273,17 @@ const Map = ({ plumeData }) => {
     });
   });
 
+  const getNumDataPoints = () => {
+    return locations.map((item, index) => <p key={index}>{item.source} data points: {item.data.features.length}</p>);
+  }
+
   return (
     <div>
       <div ref={mapContainer} className="map-container">
         <nav id="menu" />
       </div>
-      <p>
-        loaded {locations.features ? locations.features.length : ""} data points
-      </p>
+      <p>loaded {locations ? locations.length : ""} data sources</p>
+      {getNumDataPoints()}
     </div>
   );
 };

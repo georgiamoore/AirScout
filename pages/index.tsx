@@ -8,14 +8,53 @@ import { useState, useEffect } from "react";
 import React from "react";
 import prisma from "../lib/prisma";
 
+export async function getServerSideProps() {
+  // const plumeData = [];
+  // const plumeData = await prisma.plume_sensor.findMany({
+  //   select: {
+  //     id: true,
+  //     latitude: true,
+  //     longitude: true,
+  //     pm10: true,
+  //     voc: true,
+  //     no2: true,
+  //   },
+  //   where: {
+  //     latitude: { not: null },
+  //     longitude: { not: null },
+  //   },
+  //   orderBy: {
+  //     id: "desc",
+  //   },
+  // });
 
+  // restricted to Birmingham
+  const plumeData = await prisma.$queryRaw`SELECT id, latitude, longitude, pm10, voc, no2 from plume_sensor where ST_Intersects(ST_MakeEnvelope(-2.175293, 52.277401, -1.576538, 52.608052), st_point(longitude, latitude)::geography)`;
+  return {
+    props: { plumeData }, // will be passed to the page component as props
+  };
+}
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
 });
 
-const Home: NextPage = () => {
- 
+const Home: NextPage = (plumeData) => {
+  const [WAQIData, setWAQIData] = useState(null);
+  useEffect(() => {
+    const fetchWAQIData = async () => {
+      const waqiUrl = `http://localhost:5000/waqi`;
+      await fetch(waqiUrl)
+        .then((response) => response.text())
+        .then((res) => JSON.parse(res))
+        .then((json) => {
+          setWAQIData(json)
+        })
+        .catch((err) => console.log({ err }));
+    };
+    fetchWAQIData();
+  }, []);
+
 
   return (
     <div className={styles.container}>
@@ -26,7 +65,7 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <Map />
+        {WAQIData && plumeData && <Map WAQIData={WAQIData} plumeData={plumeData}/>}
       </main>
 
       <footer className={styles.footer}>
