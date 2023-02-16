@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-
+import * as turf from '@turf/turf';
 type PlumeData = {
   id: string;
   latitude: number;
@@ -70,9 +70,39 @@ const Map = ({ plumeData, WAQIData }) => {
 
   useEffect(() => {
     if (locations.length == 0) {
+      // removing null geometries - https://github.com/willymaps/voronoihover/blob/master/js/voronoihover.js
+      var collection = (formatPlumeData(plumeData.plumeData));
+      let bbox = turf.bbox(collection)
+      // var collection = turf.featureCollection(formatPlumeData(plumeData.plumeData));
+      var geojsonPolygon = {
+        "type": "FeatureCollection",
+        "features": []
+      };
+      let voronoiPolygons = turf.voronoi(collection, {bbox})
+      for (var i=0;i<voronoiPolygons.features.length;i++) {
+  
+          var geojsonArray = geojsonPolygon.features;
+  
+          if (voronoiPolygons.features[i] != null) {
+  
+              var featurePush = {
+                  "type": "Feature",
+                  "properties": collection.features[i].properties,
+                  "geometry": voronoiPolygons.features[i].geometry
+              }
+              geojsonArray.push(featurePush);
+          }
+  
+      }
+  console.log(turf.collect(geojsonPolygon, collection, 'pm10', 'values'))
+      // if (voronoiDrawn == false) {
+      //     addVoronoiLayer(geojsonPolygon);
+      //     voronoiDrawn = true;
+      // }
       setLocations(
         [{ source: "waqi", data: formatWAQIData(WAQIData) },
-        { source: "plume", data: formatPlumeData(plumeData.plumeData) }]
+        { source: "plume", data: formatPlumeData(plumeData.plumeData) },
+        { source: "plume-voronoi", data: turf.collect(geojsonPolygon, collection, 'pm10', 'values')}]
       );
     }
   }, [WAQIData, locations.length, plumeData.plumeData]);
@@ -95,10 +125,10 @@ const Map = ({ plumeData, WAQIData }) => {
       zoom: zoom,
     });
     map.current.on("load", () => {
-      console.log(locations);
       locations.map((featureCollection) => {
         console.log(featureCollection);
-        console.log(featureCollection.data);
+        // console.log(featureCollection.data);
+        // console.log(voronoi(featureCollection.data));
         if (!map.current.getSource(featureCollection.source)) {
           map.current.addSource(featureCollection.source, {
             type: "geojson",
@@ -113,15 +143,7 @@ const Map = ({ plumeData, WAQIData }) => {
             .getSource(featureCollection.source)
             .setData(featureCollection.data);
         }
-        // map.current.addLayer({
-        //   id: "gen"+featureCollection.source,
-        //   type: "circle",
-        //   source: featureCollection.source,
-        //   layout: {
-        //     visibility: "visible",
-        //   },
-        // });
-
+       
         map.current.addLayer({ //TODO fsr waqi data isn't showing up on this layer
           id: "pm10"+featureCollection.source,
           type: "circle",
@@ -198,9 +220,38 @@ const Map = ({ plumeData, WAQIData }) => {
             visibility: "visible",
           },
         });
+
+        map.current.addLayer({
+          id: "gen"+featureCollection.source,
+          type: "fill",
+          source: featureCollection.source,
+          layout: {
+            visibility: "visible",
+          },
+          paint: {
+            'fill-color': [
+              "interpolate",
+              ["linear"],
+              ["get", "pm10"], 
+              20,
+              "rgba(33,102,172,0)",
+              40,
+              "rgb(103,169,207)",
+              60,
+              "rgb(253,219,199)",
+              80,
+              "rgb(178,24,43)",
+            ], // could interpolate here but voronoi does not retain props https://github.com/Turfjs/turf/issues/1450
+            // idk why the pm10-based fill isn't working - same issue as above likely
+            "fill-opacity": 1,
+            'fill-outline-color': 'coral'
+          }
+        });
+
       });
       });
-      
+     
+
 
       // TODO this toggle menu is defunct for now, needs to be rewritten
       // sensor types (e.g. plume/waqi) need to be combined
