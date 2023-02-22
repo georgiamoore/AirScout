@@ -1,40 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import * as turf from '@turf/turf';
-type PlumeData = {
-  id: string;
-  latitude: number;
-  longitude: number;
-  pm10: number;
-  voc: number;
-  no2: number;
-};
+import * as turf from "@turf/turf";
+import { FeatureCollection } from "../types";
 
-type Feature = {
-  type: string;
-  geometry: {
-    type: string;
-    coordinates: number[];
-  };
-  properties: { id: string; pm10: number; time?: string };
-};
-type FeatureCollection = { type: string; features: Feature[] };
-
-const formatPlumeData = (data: PlumeData[]) => {
-  let formatted = data.map((sensor) => {
-    return {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [sensor.longitude, sensor.latitude],
-      },
-      properties: { id: sensor.id, pm10: sensor.pm10 },
-    };
-  });
-
-  return { type: "FeatureCollection", features: formatted };
-};
+type MapProps = {
+  plumeData: FeatureCollection;
+  WAQIData: FeatureCollection;
+  archiveData: FeatureCollection;
+}
 
 const formatWAQIData = (data) => {
   console.log(data);
@@ -44,7 +18,7 @@ const formatWAQIData = (data) => {
       type: "Point",
       coordinates: [data.longitude, data.latitude],
     },
-    // TODO idx below is an inappropriate ID -> refers to sensor station id rather than measurement id 
+    // TODO idx below is an inappropriate ID -> refers to sensor station id rather than measurement id
     // (will be fixed during backend api dev)
     properties: { id: data.idx, pm10: data.pm10, time: data.utc_date },
   };
@@ -52,9 +26,9 @@ const formatWAQIData = (data) => {
   return { type: "FeatureCollection", features: [formatted] };
 };
 
-const Map = ({ plumeData, WAQIData }) => {
+const Map = ({ plumeData, WAQIData, archiveData }: MapProps) => {
   const [lng, setLng] = useState(-1.890401);
-  // const [lng, setLng] = useState(-1.889054); 
+  // const [lng, setLng] = useState(-1.889054);
   const [lat, setLat] = useState(52.486243);
   // const [lat, setLat] = useState(52.486473);
   const [zoom, setZoom] = useState(14);
@@ -71,41 +45,47 @@ const Map = ({ plumeData, WAQIData }) => {
   useEffect(() => {
     if (locations.length == 0) {
       // removing null geometries - https://github.com/willymaps/voronoihover/blob/master/js/voronoihover.js
-      var collection = (formatPlumeData(plumeData.plumeData));
-      let bbox = turf.bbox(collection)
+      // var collection = (formatPlumeData(plumeData.plumeData));
+      console.log(plumeData);
+      var collection = plumeData;
+      let bbox = turf.bbox(collection);
       // var collection = turf.featureCollection(formatPlumeData(plumeData.plumeData));
       var geojsonPolygon = {
-        "type": "FeatureCollection",
-        "features": []
+        type: "FeatureCollection",
+        features: [],
       };
-      let voronoiPolygons = turf.voronoi(collection, {bbox})
-      for (var i=0;i<voronoiPolygons.features.length;i++) {
-  
-          var geojsonArray = geojsonPolygon.features;
-  
-          if (voronoiPolygons.features[i] != null) {
-  
-              var featurePush = {
-                  "type": "Feature",
-                  "properties": collection.features[i].properties,
-                  "geometry": voronoiPolygons.features[i].geometry
-              }
-              geojsonArray.push(featurePush);
-          }
-  
+
+      let voronoiPolygons = turf.voronoi(collection, { bbox });
+      for (var i = 0; i < voronoiPolygons.features.length; i++) {
+        var geojsonArray = geojsonPolygon.features;
+
+        if (voronoiPolygons.features[i] != null) {
+          var featurePush = {
+            type: "Feature",
+            properties: collection.features[i].properties,
+            geometry: voronoiPolygons.features[i].geometry,
+          };
+          geojsonArray.push(featurePush);
+        }
       }
-  console.log(turf.collect(geojsonPolygon, collection, 'pm10', 'values'))
+      console.log(turf.collect(geojsonPolygon, collection, "pm10", "values"));
+
       // if (voronoiDrawn == false) {
       //     addVoronoiLayer(geojsonPolygon);
       //     voronoiDrawn = true;
       // }
-      setLocations(
-        [{ source: "waqi", data: formatWAQIData(WAQIData) },
-        { source: "plume", data: formatPlumeData(plumeData.plumeData) },
-        { source: "plume-voronoi", data: turf.collect(geojsonPolygon, collection, 'pm10', 'values')}]
-      );
+      setLocations([
+        { source: "waqi", data: formatWAQIData(WAQIData) },
+        { source: "plume", data: plumeData },
+        // { source: "plume", data: formatPlumeData(plumeData.plumeData) },
+        { source: "archive", data: archiveData },
+        {
+          source: "plume-voronoi",
+          data: turf.collect(geojsonPolygon, collection, "pm10", "values"),
+        },
+      ]);
     }
-  }, [WAQIData, locations.length, plumeData.plumeData]);
+  }, [WAQIData, archiveData, locations.length, plumeData.plumeData]);
 
   // useEffect(() => {
   //   console.log(plumeData.plumeData);
@@ -143,11 +123,12 @@ const Map = ({ plumeData, WAQIData }) => {
             .getSource(featureCollection.source)
             .setData(featureCollection.data);
         }
-       
-        map.current.addLayer({ //TODO fsr waqi data isn't showing up on this layer
-          id: "pm10"+featureCollection.source,
+
+        map.current.addLayer({
+          //TODO fsr waqi data isn't showing up on this layer
+          id: "pm10" + featureCollection.source,
           type: "circle",
-          source: featureCollection.source, 
+          source: featureCollection.source,
           filter: ["has", "pm10"],
           paint: {
             "circle-color": [
@@ -171,7 +152,7 @@ const Map = ({ plumeData, WAQIData }) => {
 
         //TODO broken(?)
         map.current.addLayer({
-          id: "voc"+featureCollection.source,
+          id: "voc" + featureCollection.source,
           type: "circle",
           source: featureCollection.source,
           filter: ["has", "voc"],
@@ -194,10 +175,10 @@ const Map = ({ plumeData, WAQIData }) => {
             visibility: "visible",
           },
         });
-  
+
         //TODO broken(?)
         map.current.addLayer({
-          id: "no2"+featureCollection.source,
+          id: "no2" + featureCollection.source,
           type: "circle",
           source: featureCollection.source,
           filter: ["has", "no2"],
@@ -222,17 +203,17 @@ const Map = ({ plumeData, WAQIData }) => {
         });
 
         map.current.addLayer({
-          id: "gen"+featureCollection.source,
+          id: "gen" + featureCollection.source,
           type: "fill",
           source: featureCollection.source,
           layout: {
             visibility: "visible",
           },
           paint: {
-            'fill-color': [
+            "fill-color": [
               "interpolate",
               ["linear"],
-              ["get", "pm10"], 
+              ["get", "pm10"],
               20,
               "rgba(33,102,172,0)",
               40,
@@ -244,18 +225,15 @@ const Map = ({ plumeData, WAQIData }) => {
             ], // could interpolate here but voronoi does not retain props https://github.com/Turfjs/turf/issues/1450
             // idk why the pm10-based fill isn't working - same issue as above likely
             "fill-opacity": 1,
-            'fill-outline-color': 'coral'
-          }
+            "fill-outline-color": "coral",
+          },
         });
-
       });
-      });
-     
+    });
 
-
-      // TODO this toggle menu is defunct for now, needs to be rewritten
-      // sensor types (e.g. plume/waqi) need to be combined
-      // e.g. toggle pm10 view for all pm10 layers (rather than by sensor type)
+    // TODO this toggle menu is defunct for now, needs to be rewritten
+    // sensor types (e.g. plume/waqi) need to be combined
+    // e.g. toggle pm10 view for all pm10 layers (rather than by sensor type)
     map.current.on("idle", () => {
       // If these two layers were not added to the map, abort
       if (
@@ -325,17 +303,21 @@ const Map = ({ plumeData, WAQIData }) => {
   });
 
   const getNumDataPoints = () => {
-    return locations.map((item, index) => <p key={index}>{item.source} data points: {item.data.features.length}</p>);
-  }
+    return locations.map((item, index) => (
+      <p key={index}>
+        {item.source} data points: {item.data.features.length}
+      </p>
+    ));
+  };
 
   return (
-    <div>
+    <>
       <div ref={mapContainer} className="map-container">
         <nav id="menu" />
       </div>
       <p>loaded {locations ? locations.length : ""} data sources</p>
       {getNumDataPoints()}
-    </div>
+    </>
   );
 };
 
