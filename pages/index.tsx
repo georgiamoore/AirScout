@@ -26,15 +26,33 @@ const Header = dynamic(() => import("../components/Header"), {
 const Home: NextPage = () => {
   const [WAQIData, setWAQIData] = useState(null);
   const [archiveData, setArchiveData] = useState(null);
-  // const [isLoading, setLoading] = useState(false)
 
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
-  // const fetcher = (...args) => fetch(...args).then((res) => res.text()).then((res) => JSON.parse(res));
   const { data: plumeData, error, isLoading } = useSWR(
     "http://localhost:5000/plume",
     fetcher
   );
-  console.log(plumeData);
+
+  const multipleFetcher = (urls: string[]) => {
+    const f = (url: string) => fetch(url).then(r => r.json()).catch((err) => console.log( err ))
+    return Promise.all(urls.map(url => f(url)))
+  }
+  
+  //TODO implement requests using this function rather than multiple useEffect hooks
+  const useMultipleRequests = () => {
+    const urls = ['http://localhost:5000/plume', 'http://localhost:5000/waqi', 'http://localhost:5000/waqi-archive']
+    const { data, error } = useSWR(urls, multipleFetcher)
+    console.log(data)
+    return {
+      data: data,
+      isError: !!error,
+      isLoading: !data && !error,
+      error: error
+    }
+  }
+
+  const { data , isLoading:loading} = useMultipleRequests()
+  if (!loading) console.log(data)
 
   useEffect(() => {
     const fetchWAQIData = async () => {
@@ -57,7 +75,7 @@ const Home: NextPage = () => {
         .then((res) => JSON.parse(res))
         .then((json) => {
           setArchiveData(json);
-          console.log(json);
+          // console.log(json);
         })
         .catch((err) => console.log({ err }));
     };
