@@ -3,16 +3,14 @@ import dynamic from "next/dynamic";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
-import { Marker, Popup } from "react-map-gl";
 import { useState, useEffect } from "react";
 import React from "react";
-import prisma from "../lib/prisma";
 import Container from "@mui/material/Container";
 import Chart from "../components/Chart";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import useSWR from "swr";
-
+const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => <p>Loading...</p>,
@@ -26,10 +24,11 @@ const Header = dynamic(() => import("../components/Header"), {
 const Home: NextPage = () => {
   const [WAQIData, setWAQIData] = useState(null);
   const [archiveData, setArchiveData] = useState(null);
+  const [astonData, setAstonData] = useState(null);
 
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
   const { data: plumeData, error, isLoading } = useSWR(
-    "http://localhost:5000/plume",
+    apiURL + "/plume",
     fetcher
   );
 
@@ -40,7 +39,7 @@ const Home: NextPage = () => {
   
   //TODO implement requests using this function rather than multiple useEffect hooks
   const useMultipleRequests = () => {
-    const urls = ['http://localhost:5000/plume', 'http://localhost:5000/waqi', 'http://localhost:5000/waqi-archive']
+    const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston']
     const { data, error } = useSWR(urls, multipleFetcher)
     console.log(data)
     return {
@@ -51,12 +50,12 @@ const Home: NextPage = () => {
     }
   }
 
-  const { data , isLoading:loading} = useMultipleRequests()
-  if (!loading) console.log(data)
+  // const { data , isLoading:loading} = useMultipleRequests()
+  // if (!loading) console.log(data)
 
   useEffect(() => {
     const fetchWAQIData = async () => {
-      const waqiUrl = `http://localhost:5000/waqi`;
+      const waqiUrl = apiURL + `/waqi`;
       await fetch(waqiUrl)
         .then((response) => response.text())
         .then((res) => JSON.parse(res))
@@ -69,17 +68,31 @@ const Home: NextPage = () => {
   }, []);
   useEffect(() => {
     const fetchArchiveData = async () => {
-      const archiveUrl = `http://localhost:5000/waqi-archive`;
+      const archiveUrl = apiURL + `/waqi-archive`;
       await fetch(archiveUrl)
         .then((response) => response.text())
         .then((res) => JSON.parse(res))
         .then((json) => {
           setArchiveData(json);
-          // console.log(json);
+          console.log(json);
         })
         .catch((err) => console.log({ err }));
     };
     fetchArchiveData();
+  }, []);
+  useEffect(() => {
+    const fetchAstonData = async () => {
+      const astonUrl = apiURL + `/aston`;
+      await fetch(astonUrl)
+        .then((response) => response.text())
+        .then((res) => JSON.parse(res))
+        .then((json) => {
+          setAstonData(json);
+          console.log(json);
+        })
+        .catch((err) => console.log({ err }));
+    };
+    fetchAstonData();
   }, []);
   if (!plumeData) return <div>Loading...</div>
   return (
@@ -97,6 +110,7 @@ const Home: NextPage = () => {
               WAQIData={WAQIData}
               plumeData={plumeData}
               archiveData={archiveData}
+              astonData={astonData}
             />
           )}
         </Container>
