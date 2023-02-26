@@ -3,86 +3,98 @@ import dynamic from "next/dynamic";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
-import { Marker, Popup } from "react-map-gl";
 import { useState, useEffect } from "react";
 import React from "react";
-import prisma from '../lib/prisma';
-export async function getServerSideProps() {
-  const plumeData = await prisma.plume_sensor.findMany({
-    select: {
-      id: true,
-      latitude: true,
-      longitude: true,
-      pm10: true,
-      voc: true,
-      no2: true,
-    },
-    where: {
-      latitude: { not: null },
-      longitude: { not: null },
-    },
-    orderBy: {
-      id: "desc"
-    }
-  })
-
-  // restricted to Birmingham
-  const boundedData = await prisma.$queryRaw`SELECT id, latitude, longitude, pm10, voc, no2 from plume_sensor where ST_Intersects(ST_MakeEnvelope(-2.175293, 52.277401, -1.576538, 52.608052), st_point(longitude, latitude)::geography)`;
-  return {
-    props: {plumeData}, // will be passed to the page component as props
-  }
-}
-
-
-const formatSensorData = (data) => {
-  // console.log(data.plumeData)
-  let formatted = data.map((sensor) => {
-    return {
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [sensor.longitude, sensor.latitude] },
-      properties: { id: sensor.id, pm10: sensor.pm10 }
-    }
-  });
-  // console.log(data)
-  return { type: "FeatureCollection", features: formatted };
-  // return { type: "FeatureCollection", features: data };
-
-}
+import Container from "@mui/material/Container";
+import Chart from "../components/Chart";
+import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import useSWR from "swr";
+const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
 });
-const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/greggs.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&bbox=-1.907158%2C52.472952%2C-1.875916%2C52.490725&limit=10`;
-// const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/greggs.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&bbox=-1.892138%2C52.482127%2C-1.884756%2C52.490071&limit=10`
+const Header = dynamic(() => import("../components/Header"), {
+  loading: () => <p>Loading...</p>,
+  ssr: false,
+});
 
-const Home: NextPage = ({plumeData}) => {
-  const [locations, setLocations] = useState([]);
-  const [showPopup, setShowPopup] = useState(true);
+const Home: NextPage = () => {
+  const [WAQIData, setWAQIData] = useState(null);
+  const [archiveData, setArchiveData] = useState(null);
+  const [astonData, setAstonData] = useState(null);
+
+  const fetcher = (...args) => fetch(...args).then((res) => res.json());
+  const { data: plumeData, error, isLoading } = useSWR(
+    apiURL + "/plume",
+    fetcher
+  );
+
+  const multipleFetcher = (urls: string[]) => {
+    const f = (url: string) => fetch(url).then(r => r.json()).catch((err) => console.log( err ))
+    return Promise.all(urls.map(url => f(url)))
+  }
+  
+  //TODO implement requests using this function rather than multiple useEffect hooks
+  const useMultipleRequests = () => {
+    const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston']
+    const { data, error } = useSWR(urls, multipleFetcher)
+    console.log(data)
+    return {
+      data: data,
+      isError: !!error,
+      isLoading: !data && !error,
+      error: error
+    }
+  }
+
+  // const { data , isLoading:loading} = useMultipleRequests()
+  // if (!loading) console.log(data)
+
   useEffect(() => {
-    const fetchLocations = async () => {
-      await fetch(url)
+    const fetchWAQIData = async () => {
+      const waqiUrl = apiURL + `/waqi`;
+      await fetch(waqiUrl)
         .then((response) => response.text())
         .then((res) => JSON.parse(res))
         .then((json) => {
-          setLocations(json.features);
+          setWAQIData(json);
         })
         .catch((err) => console.log({ err }));
-    //   await prisma.plume_sensor.findMany({
-    //     select: {
-    //       id: true,
-    //       latitude: true,
-    //       longitude: true,
-    //     },
-    //     orderBy: {
-    //       id: "desc"
-    //     }
-    //   }).then((res) => setLocations(formatSensorData(res).features))
     };
-    // fetchLocations();
-    console.log(plumeData)
-    setLocations(formatSensorData(plumeData))
+    fetchWAQIData();
   }, []);
+  useEffect(() => {
+    const fetchArchiveData = async () => {
+      const archiveUrl = apiURL + `/waqi-archive`;
+      await fetch(archiveUrl)
+        .then((response) => response.text())
+        .then((res) => JSON.parse(res))
+        .then((json) => {
+          setArchiveData(json);
+          console.log(json);
+        })
+        .catch((err) => console.log({ err }));
+    };
+    fetchArchiveData();
+  }, []);
+  useEffect(() => {
+    const fetchAstonData = async () => {
+      const astonUrl = apiURL + `/aston`;
+      await fetch(astonUrl)
+        .then((response) => response.text())
+        .then((res) => JSON.parse(res))
+        .then((json) => {
+          setAstonData(json);
+          console.log(json);
+        })
+        .catch((err) => console.log({ err }));
+    };
+    fetchAstonData();
+  }, []);
+  if (!plumeData) return <div>Loading...</div>
   return (
     <div className={styles.container}>
       <Head>
@@ -90,11 +102,55 @@ const Home: NextPage = ({plumeData}) => {
         <meta name="description" content="Generated by create next app" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
+      {/* <Header></Header> */}
       <main className={styles.main}>
-        
-        <Map locations={locations}  />
-        
+        <Container fixed sx={{ minWidth: "250px" }}>
+          {WAQIData && (
+            <Map
+              WAQIData={WAQIData}
+              plumeData={plumeData}
+              archiveData={archiveData}
+              astonData={astonData}
+            />
+          )}
+        </Container>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+          <Grid container spacing={3}>
+            {/* Chart */}
+            <Grid item xs={12} md={8} lg={9}>
+              <Paper
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  height: 240,
+                }}
+              >
+                <Chart />
+              </Paper>
+            </Grid>
+            {/* Recent Deposits */}
+            <Grid item xs={12} md={4} lg={3}>
+              <Paper
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  height: 240,
+                }}
+              >
+                {/* <Deposits /> */}
+              </Paper>
+            </Grid>
+            {/* Recent Orders */}
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
+                {/* <Orders /> */}
+              </Paper>
+            </Grid>
+          </Grid>
+          {/* <Copyright sx={{ pt: 4 }} /> */}
+        </Container>
       </main>
 
       <footer className={styles.footer}>
