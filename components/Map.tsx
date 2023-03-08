@@ -2,15 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import * as turf from "@turf/turf";
-import { FeatureCollection } from "../types";
+import { FeatureCollection } from "@turf/turf";
 
 type MapProps = {
-  plumeData: FeatureCollection;
-  WAQIData: FeatureCollection;
-  archiveData: FeatureCollection;
+  combinedData: FeatureCollection[];
 };
 
-const Map = ({ plumeData, WAQIData, archiveData, astonData }: MapProps) => {
+const Map = ({ combinedData }: MapProps) => {
   const [lng, setLng] = useState(-1.890401);
   const [lat, setLat] = useState(52.486243);
   const [zoom, setZoom] = useState(14);
@@ -29,17 +27,15 @@ const Map = ({ plumeData, WAQIData, archiveData, astonData }: MapProps) => {
       // removing null geometries - https://github.com/willymaps/voronoihover/blob/master/js/voronoihover.js
 
       let collection = turf.featureCollection([
-        ...plumeData.features,
-        ...WAQIData.features,
-        // ...archiveData.features,
-        ...astonData.features,
+        ...combinedData
+          .map((x) => x.features)
+          .reduce((prev, current) => [...prev, ...current]),
       ]);
       let bbox = turf.bbox(collection);
       let geojsonPolygon = {
         type: "FeatureCollection",
         features: [],
       };
-
       let voronoiPolygons = turf.voronoi(collection, { bbox });
       for (let i = 0; i < voronoiPolygons.features.length; i++) {
         let geojsonArray = geojsonPolygon.features;
@@ -58,19 +54,17 @@ const Map = ({ plumeData, WAQIData, archiveData, astonData }: MapProps) => {
       //     addVoronoiLayer(geojsonPolygon);
       //     voronoiDrawn = true;
       // }
-
+      console.log(combinedData.map((x, i) => ({ source: i, data: x })));
+      console.log(combinedData.map((x) => x.features));
       setLocations([
-        { source: "waqi", data: WAQIData },
-        { source: "plume", data: plumeData },
-        { source: "archive", data: archiveData },
-        { source: "aston", data: astonData },
+        ...combinedData.map((data, i) => ({ source: "" + i + "", data: data })),
         {
           source: "plume-voronoi",
           data: turf.collect(geojsonPolygon, collection, "pm10", "values"),
         },
       ]);
     }
-  }, [WAQIData, archiveData, astonData, locations.length, plumeData]);
+  }, [combinedData, locations.length]);
 
   useEffect(() => {
     if (map.current) return;
@@ -281,7 +275,7 @@ const Map = ({ plumeData, WAQIData, archiveData, astonData }: MapProps) => {
   const getNumDataPoints = () => {
     return locations.map((item, index) => (
       <p key={index}>
-        {item.source} data points: {item.data.features.length}
+        {/* {item.source} data points: {item.data.features.length} */}
       </p>
     ));
   };

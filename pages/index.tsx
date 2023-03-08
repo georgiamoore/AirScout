@@ -22,16 +22,6 @@ const Header = dynamic(() => import("../components/Header"), {
 });
 
 const Home: NextPage = () => {
-  const [WAQIData, setWAQIData] = useState(null);
-  const [archiveData, setArchiveData] = useState(null);
-  const [astonData, setAstonData] = useState(null);
-
-  const fetcher = (...args) => fetch(...args).then((res) => res.json());
-  const { data: plumeData, error, isLoading } = useSWR(
-    apiURL + "/plume",
-    fetcher
-  );
-
   const multipleFetcher = (urls: string[]) => {
     const f = (url: string) => fetch(url).then(r => r.json()).catch((err) => console.log( err ))
     return Promise.all(urls.map(url => f(url)))
@@ -39,7 +29,8 @@ const Home: NextPage = () => {
   
   //TODO implement requests using this function rather than multiple useEffect hooks
   const useMultipleRequests = () => {
-    const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston']
+    const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston', 
+                  apiURL + '/defra_birr', apiURL + '/defra_bmld', apiURL + '/defra_bold']
     const { data, error } = useSWR(urls, multipleFetcher)
     console.log(data)
     return {
@@ -50,51 +41,9 @@ const Home: NextPage = () => {
     }
   }
 
-  // const { data , isLoading:loading} = useMultipleRequests()
-  // if (!loading) console.log(data)
-
-  useEffect(() => {
-    const fetchWAQIData = async () => {
-      const waqiUrl = apiURL + `/waqi`;
-      await fetch(waqiUrl)
-        .then((response) => response.text())
-        .then((res) => JSON.parse(res))
-        .then((json) => {
-          setWAQIData(json);
-        })
-        .catch((err) => console.log({ err }));
-    };
-    fetchWAQIData();
-  }, []);
-  useEffect(() => {
-    const fetchArchiveData = async () => {
-      const archiveUrl = apiURL + `/waqi-archive`;
-      await fetch(archiveUrl)
-        .then((response) => response.text())
-        .then((res) => JSON.parse(res))
-        .then((json) => {
-          setArchiveData(json);
-          console.log(json);
-        })
-        .catch((err) => console.log({ err }));
-    };
-    fetchArchiveData();
-  }, []);
-  useEffect(() => {
-    const fetchAstonData = async () => {
-      const astonUrl = apiURL + `/aston`;
-      await fetch(astonUrl)
-        .then((response) => response.text())
-        .then((res) => JSON.parse(res))
-        .then((json) => {
-          setAstonData(json);
-          console.log(json);
-        })
-        .catch((err) => console.log({ err }));
-    };
-    fetchAstonData();
-  }, []);
-  if (!plumeData) return <div>Loading...</div>
+  const { data , isLoading:loading} = useMultipleRequests()
+ 
+  if (loading) return <div>Loading...</div>
   return (
     <div className={styles.container}>
       <Head>
@@ -105,13 +54,8 @@ const Home: NextPage = () => {
       {/* <Header></Header> */}
       <main className={styles.main}>
         <Container fixed sx={{ minWidth: "250px" }}>
-          {WAQIData && (
-            <Map
-              WAQIData={WAQIData}
-              plumeData={plumeData}
-              archiveData={archiveData}
-              astonData={astonData}
-            />
+          {data && (
+            <Map combinedData={data}/>
           )}
         </Container>
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>

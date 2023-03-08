@@ -15,5 +15,4 @@ type PlumeData = {
     };
     properties: { id: string; pm10: number; time?: string };
   };
-  export type FeatureCollection = { type: string; features: Feature[] };
   
