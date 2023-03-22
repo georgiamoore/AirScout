@@ -22,27 +22,41 @@ const Header = dynamic(() => import("../components/Header"), {
 
 const Home: NextPage = () => {
   const multipleFetcher = (urls: string[]) => {
-    const f = (url: string) => fetch(url).then(r => r.json()).catch((err) => console.log( err ))
-    return Promise.all(urls.map(url => f(url)))
-  }
-  
+    const f = (url: string) =>
+      fetch(url)
+        .then((r) => r.json())
+        .catch((err) => console.log(err));
+    return Promise.all(urls.map((url) => f(url)));
+  };
+
   //TODO implement requests using this function rather than multiple useEffect hooks
-  const useMultipleRequests = () => {
-    const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston', 
-                  apiURL + '/defra_birr', apiURL + '/defra_bmld', apiURL + '/defra_bold']
-    const { data, error } = useSWR(urls, multipleFetcher)
-    console.log(data)
+  const useMultipleRequests = (urls) => {
+    // const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston',
+    //               apiURL + '/defra?pollutants=PM2.5', apiURL + '/defra_bmld', apiURL + '/defra_bold']
+    const { data, error } = useSWR(urls, multipleFetcher);
+    // console.log(data)
     return {
       data: data,
       isError: !!error,
       isLoading: !data && !error,
-      error: error
-    }
-  }
+      error: error,
+    };
+  };
 
-  const { data , isLoading:loading} = useMultipleRequests()
- 
-  if (loading) return <div>Loading...</div>
+  const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
+    apiURL + "/plume",
+    apiURL + "/waqi",
+    apiURL + "/waqi-archive",
+    apiURL + "/aston",
+    apiURL + "/defra?pollutants=PM2.5",
+  ]);
+  const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
+    apiURL + "/stats?pollutants=PM2.5&days=365",
+    apiURL + "/stats?pollutants=PM10&days=365",
+    apiURL + "/stats?pollutants=O3&days=365",
+  ]);
+  console.log(chartData);
+  if (mapDataLoading || chartDataLoading) return <div>Loading...</div>;
   return (
     <div className={styles.container}>
       <Head>
@@ -53,44 +67,42 @@ const Home: NextPage = () => {
       {/* <Header></Header> */}
       <main className={styles.main}>
         <Container fixed sx={{ minWidth: "250px" }}>
-          {data && (
-            <Map combinedData={data}/>
-          )}
+          {/* {mapData && (
+            <Map combinedData={mapData}/>
+          )} */}
         </Container>
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          <Grid container spacing={3}>
-            {/* Chart */}
-            <Grid item xs={12} md={8} lg={9}>
-              <Paper
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  height: 240,
-                }}
-              >
-                <Chart />
-              </Paper>
-            </Grid>
-            {/* Recent Deposits */}
-            <Grid item xs={12} md={4} lg={3}>
-              <Paper
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  height: 240,
-                }}
-              >
-                {/* <Deposits /> */}
-              </Paper>
-            </Grid>
-            {/* Recent Orders */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-                {/* <Orders /> */}
-              </Paper>
-            </Grid>
+          <Grid
+            container
+            spacing={{ xs: 2, md: 3 }}
+            columns={{ xs: 1, sm: 4, md: 12 }}
+          >
+            {chartData && (
+              <>
+                {chartData.map((chart) => (
+                  <Grid
+                    item
+                    xs={2}
+                    sm={4}
+                    md={4}
+                    key={Object.keys(chart[0])[1] + '-grid'}
+                  >
+                    <Paper
+                      key={Object.keys(chart[0])[1] + '-paper'}
+                      sx={{
+                        p: 2,
+                        display: "flex",
+                        flexDirection: "column",
+                        height: 240,
+                      }}
+                    >
+                      <Chart data={chart} />
+                    </Paper>
+                  </Grid>
+                ))}
+              </>
+            )}
+            
           </Grid>
           {/* <Copyright sx={{ pt: 4 }} /> */}
         </Container>
