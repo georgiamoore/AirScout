@@ -5,14 +5,11 @@ import { LineChart, Line, XAxis, YAxis, Label, ResponsiveContainer } from 'recha
 import Title from './Title';
 
 
-export default function Chart({data}) {
+export default function Chart({data, titlePrefix}) {
   const theme = useTheme();
-console.log(data)
-console.log(Object.keys(data[0])[1])
-// console.log(localData)
   return (
     <React.Fragment>
-      <Title>{Object.keys(data[0])[1]} levels</Title>
+      <Title>{titlePrefix}{Object.keys(data[0])[1]} levels</Title>
       <ResponsiveContainer>
         <LineChart
           data={data}

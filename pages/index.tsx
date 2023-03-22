@@ -5,9 +5,8 @@ import Image from "next/image";
 import styles from "../styles/Home.module.css";
 import React from "react";
 import Container from "@mui/material/Container";
-import Chart from "../components/Chart";
+import ChartContainer from "../components/ChartContainer";
 import Grid from "@mui/material/Grid";
-import Paper from "@mui/material/Paper";
 import useSWR from "swr";
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -50,12 +49,15 @@ const Home: NextPage = () => {
     apiURL + "/aston",
     apiURL + "/defra?pollutants=PM2.5",
   ]);
+  //TODO should parameterise this to make adding new pollutants easier
   const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
-    apiURL + "/stats?pollutants=PM2.5&days=365",
-    apiURL + "/stats?pollutants=PM10&days=365",
-    apiURL + "/stats?pollutants=O3&days=365",
+    apiURL + "/stats?pollutants=PM2.5",
+    apiURL + "/stats?pollutants=PM10",
+    apiURL + "/stats?pollutants=O3",
+    apiURL + "/stats?pollutants=NO2",
+    apiURL + "/stats?pollutants=SO2",
   ]);
-  console.log(chartData);
+
   if (mapDataLoading || chartDataLoading) return <div>Loading...</div>;
   return (
     <div className={styles.container}>
@@ -80,25 +82,9 @@ const Home: NextPage = () => {
             {chartData && (
               <>
                 {chartData.map((chart) => (
-                  <Grid
-                    item
-                    xs={2}
-                    sm={4}
-                    md={4}
-                    key={Object.keys(chart[0])[1] + '-grid'}
-                  >
-                    <Paper
-                      key={Object.keys(chart[0])[1] + '-paper'}
-                      sx={{
-                        p: 2,
-                        display: "flex",
-                        flexDirection: "column",
-                        height: 240,
-                      }}
-                    >
-                      <Chart data={chart} />
-                    </Paper>
-                  </Grid>
+                  <ChartContainer chart={chart} 
+                  //TODO this key is so disgusting haha there has to be a way to simplify it
+                  key={Object.keys(JSON.parse(chart.year)[0])[1]+'container'} />
                 ))}
               </>
             )}
