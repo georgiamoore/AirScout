@@ -5,7 +5,10 @@ import * as turf from "@turf/turf";
 import { FeatureCollection } from "@turf/turf";
 
 type MapProps = {
-  combinedData: FeatureCollection[];
+  combinedData: {
+    source: string;
+    data: {features:FeatureCollection[]};
+  }[];
 };
 
 const Map = ({ combinedData }: MapProps) => {
@@ -18,7 +21,7 @@ const Map = ({ combinedData }: MapProps) => {
   const [locations, setLocations] = useState<
     {
       source: string;
-      data: FeatureCollection;
+      data: {features: FeatureCollection[]};
     }[]
   >([]);
 
@@ -26,11 +29,12 @@ const Map = ({ combinedData }: MapProps) => {
     if (locations.length == 0) {
       // removing null geometries - https://github.com/willymaps/voronoihover/blob/master/js/voronoihover.js
 
+
       let collection = turf.featureCollection([
-        ...combinedData
-          .map((x) => x.features)
+        ...combinedData.map((x) => x.data.features)
           .reduce((prev, current) => [...prev, ...current]),
       ]);
+
       let bbox = turf.bbox(collection);
       let geojsonPolygon = {
         type: "FeatureCollection",
@@ -54,10 +58,9 @@ const Map = ({ combinedData }: MapProps) => {
       //     addVoronoiLayer(geojsonPolygon);
       //     voronoiDrawn = true;
       // }
-      console.log(combinedData.map((x, i) => ({ source: i, data: x })));
-      console.log(combinedData.map((x) => x.features));
+
       setLocations([
-        ...combinedData.map((data, i) => ({ source: "" + i + "", data: data })),
+        ...combinedData,
         {
           source: "plume-voronoi",
           data: turf.collect(geojsonPolygon, collection, "pm10", "values"),
@@ -275,7 +278,7 @@ const Map = ({ combinedData }: MapProps) => {
   const getNumDataPoints = () => {
     return locations.map((item, index) => (
       <p key={index}>
-        {/* {item.source} data points: {item.data.features.length} */}
+        {item.source} data points: {item.data.features.length}
       </p>
     ));
   };
