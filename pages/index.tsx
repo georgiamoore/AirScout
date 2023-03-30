@@ -43,8 +43,9 @@ const Home: NextPage = () => {
   };
 
   const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
-    // apiURL + "/aston",
-    apiURL + "/defra?pollutants=pm2.5",
+    apiURL + "/aston",
+    // apiURL + "/defra?pollutants=pm2.5",
+    apiURL + "/defra",
   ]);
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
   const chartUrls = pollutants.map(pollutant => `${apiURL}/stats?pollutants=${pollutant}`);

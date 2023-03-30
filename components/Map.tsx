@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import * as turf from "@turf/turf";
 import { FeatureCollection } from "@turf/turf";
+import RainLayer from "mapbox-gl-rain-layer";
 
 type MapProps = {
   combinedData: {
@@ -15,6 +16,7 @@ const Map = ({ combinedData }: MapProps) => {
   const [lng, setLng] = useState(-1.890401);
   const [lat, setLat] = useState(52.486243);
   const [zoom, setZoom] = useState(14);
+  const [rainUpdateTimestamp, setRainUpdateTimestamp] = useState(new Date());
   const mapContainer = useRef<any>(null);
   const map = useRef<mapboxgl.Map | any>(null);
   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
@@ -64,6 +66,15 @@ const Map = ({ combinedData }: MapProps) => {
       zoom: zoom,
     });
     map.current.on("load", () => {
+      const rainLayer = new RainLayer({
+        id: "rain",
+        source: "rainviewer",
+        scale: "noaa",
+      });
+      map.current.addLayer(rainLayer);
+      rainLayer.on("refresh", (data: { timestamp: number }) => {
+        setRainUpdateTimestamp(new Date(data.timestamp * 1000));
+      });
       locations.map((featureCollection) => {
         if (!map.current.getSource(featureCollection.source)) {
           map.current.addSource(featureCollection.source, {
@@ -300,6 +311,14 @@ const Map = ({ combinedData }: MapProps) => {
       </div>
       <p>loaded {locations ? locations.length : ""} data sources</p>
       {getNumDataPoints()}
+      <p>
+        Rain data last updated:{" "}
+        {rainUpdateTimestamp.toLocaleTimeString("en-GB")}
+      </p>
+      <p>
+        Rain data last updated:{" "}
+        {rainUpdateTimestamp.toLocaleDateString("en-GB")}
+      </p>
     </>
   );
 };
