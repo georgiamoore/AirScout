@@ -31,40 +31,25 @@ const Map = ({ combinedData }: MapProps) => {
 
       let collection = turf.featureCollection([
         ...combinedData
+          .filter((x) => x.data.features)
           .map((x) => x.data.features)
           .reduce((prev, current) => [...prev, ...current]),
       ]);
 
-      let bbox = turf.bbox(collection);
-      let geojsonPolygon = {
-        type: "FeatureCollection",
-        features: [],
-      };
-      let voronoiPolygons = turf.voronoi(collection, { bbox });
-      for (let i = 0; i < voronoiPolygons.features.length; i++) {
-        let geojsonArray = geojsonPolygon.features;
-
-        if (voronoiPolygons.features[i] != null) {
-          let featurePush = {
-            type: "Feature",
-            properties: collection.features[i].properties,
-            geometry: voronoiPolygons.features[i].geometry,
-          };
-          geojsonArray.push(featurePush);
-        }
-      }
-
-      // if (voronoiDrawn == false) {
-      //     addVoronoiLayer(geojsonPolygon);
-      //     voronoiDrawn = true;
-      // }
-
+      const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
+      const voronoiCollection = pollutants.map((pollutant) => {
+        return {
+          source: pollutant + "-voronoi",
+          data: collectWithFilter(collection, pollutant),
+        };
+      });
       setLocations([
         ...combinedData,
-        {
-          source: "plume-voronoi",
-          data: turf.collect(geojsonPolygon, collection, "pm10", "values"),
-        },
+        // {
+        //   source: "pm2.5-voronoi",
+        //   data: collectWithFilter(collection, "pm2.5"),
+        // },
+        ...voronoiCollection,
       ]);
     }
   }, [combinedData, locations.length]);
@@ -94,21 +79,16 @@ const Map = ({ combinedData }: MapProps) => {
             .getSource(featureCollection.source)
             .setData(featureCollection.data);
         }
-
-        if (featureCollection.source == "plume-voronoi") {
-          map.current.addLayer({
-            id: "pm10Voronoi" + featureCollection.source,
-            type: "fill",
-            source: featureCollection.source,
-            layout: {
-              visibility: "visible",
-            },
-            paint: {
-              //shading polygon based on levels of pm10 in area
+        if (featureCollection.source.includes("voronoi")) {
+          const pollutant = featureCollection.source.split("-")[0];
+          console.log(featureCollection.data);
+          // defining the linear interpolation colour coding values for each pollutant
+          const interpolationsMap = {
+            "pm2.5": {
               "fill-color": [
                 "interpolate",
                 ["linear"],
-                ["get", "pm10"],
+                ["get", "pm2.5"],
                 0,
                 "rgba(33,102,172,0)",
                 4,
@@ -118,21 +98,50 @@ const Map = ({ combinedData }: MapProps) => {
                 12,
                 "rgb(178,24,43)",
               ],
+            },
+            "o3": {
+              "fill-color": [
+                "interpolate",
+                ["linear"],
+                ["get", "o3"],
+                0,
+                "rgba(33,102,172,0)",
+                50,
+                "rgb(103,169,207)",
+                100,
+                "rgb(253,219,199)",
+                150,
+                "rgb(178,24,43)",
+              ],
+            },
+            // TODO add other pollutants
+          };
+
+          const interpolations = interpolationsMap[pollutant] || {};
+          map.current.addLayer({
+            id: "voronoi-" + pollutant,
+            type: "fill",
+            source: featureCollection.source,
+            layout: {
+              visibility: "visible",
+            },
+            paint: {
+              ...interpolations,
               "fill-opacity": 0.2,
               "fill-outline-color": "blue",
             },
           });
         } else {
           map.current.addLayer({
-            id: "pm10" + featureCollection.source,
+            id: "pm2.5" + featureCollection.source,
             type: "circle",
             source: featureCollection.source,
-            filter: ["has", "pm10"],
+            filter: ["has", "pm2.5"],
             paint: {
               "circle-color": [
                 "interpolate",
                 ["linear"],
-                ["get", "pm10"],
+                ["get", "pm2.5"],
                 0,
                 "rgba(33,102,172,0)",
                 20,
@@ -278,7 +287,8 @@ const Map = ({ combinedData }: MapProps) => {
   const getNumDataPoints = () => {
     return locations.map((item, index) => (
       <p key={index}>
-        {item.source} data points: {item.data.features.length}
+        {item.source} data points:{" "}
+        {item.data.features ? item.data.features.length : "N/A"}
       </p>
     ));
   };
@@ -291,6 +301,38 @@ const Map = ({ combinedData }: MapProps) => {
       <p>loaded {locations ? locations.length : ""} data sources</p>
       {getNumDataPoints()}
     </>
+  );
+};
+
+const collectWithFilter = (collection, propertyName) => {
+  const filteredFeatures = turf.featureCollection(
+    collection.features.filter(
+      (f) =>
+        f.properties[propertyName] !== undefined &&
+        !isNaN(f.properties[propertyName]) &&
+        f.properties[propertyName] !== "NaN"
+    )
+  );
+  const bbox = turf.bbox(filteredFeatures);
+  const voronoiPolygons = turf.voronoi(filteredFeatures, { bbox });
+
+  let filteredVoronoiFeatures = turf.featureCollection([]);
+  for (let i = 0; i < voronoiPolygons.features.length; i++) {
+    if (voronoiPolygons.features[i] != null) {
+      let featurePush = {
+        type: "Feature",
+        properties: collection.features[i].properties,
+        geometry: voronoiPolygons.features[i].geometry,
+      };
+      filteredVoronoiFeatures.features.push(featurePush);
+    }
+  }
+
+  return turf.collect(
+    filteredVoronoiFeatures,
+    filteredFeatures,
+    propertyName,
+    "values"
   );
 };
 
