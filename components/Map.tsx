@@ -19,6 +19,44 @@ const Map = ({ combinedData }: MapProps) => {
   const [rainUpdateTimestamp, setRainUpdateTimestamp] = useState(new Date());
   const mapContainer = useRef<any>(null);
   const map = useRef<mapboxgl.Map | any>(null);
+  const rainLayer = new RainLayer({
+    id: "rain",
+    source: "rainviewer",
+    scale: "noaa",
+    rainColor: "#0703fc",
+  });
+  const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
+  const interpolationsMap = {
+    "pm2.5": [
+      "interpolate",
+      ["linear"],
+      ["get", "pm2.5"],
+      0,
+      "rgba(33,102,172,0)",
+      4,
+      "rgb(103,169,207)",
+      8,
+      "rgb(253,219,199)",
+      12,
+      "rgb(178,24,43)",
+    ],
+
+    o3: [
+      "interpolate",
+      ["linear"],
+      ["get", "o3"],
+      0,
+      "rgba(33,102,172,0)",
+      50,
+      "rgb(103,169,207)",
+      100,
+      "rgb(253,219,199)",
+      150,
+      "rgb(178,24,43)",
+    ],
+
+    // TODO add other pollutants
+  };
   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [locations, setLocations] = useState<
     {
@@ -38,7 +76,6 @@ const Map = ({ combinedData }: MapProps) => {
           .reduce((prev, current) => [...prev, ...current]),
       ]);
 
-      const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
       const voronoiCollection = pollutants.map((pollutant) => {
         return {
           source: pollutant + "-voronoi",
@@ -66,11 +103,6 @@ const Map = ({ combinedData }: MapProps) => {
       zoom: zoom,
     });
     map.current.on("load", () => {
-      const rainLayer = new RainLayer({
-        id: "rain",
-        source: "rainviewer",
-        scale: "noaa",
-      });
       map.current.addLayer(rainLayer);
       rainLayer.on("refresh", (data: { timestamp: number }) => {
         setRainUpdateTimestamp(new Date(data.timestamp * 1000));
@@ -94,39 +126,6 @@ const Map = ({ combinedData }: MapProps) => {
           const pollutant = featureCollection.source.split("-")[0];
           console.log(featureCollection.data);
           // defining the linear interpolation colour coding values for each pollutant
-          const interpolationsMap = {
-            "pm2.5": {
-              "fill-color": [
-                "interpolate",
-                ["linear"],
-                ["get", "pm2.5"],
-                0,
-                "rgba(33,102,172,0)",
-                4,
-                "rgb(103,169,207)",
-                8,
-                "rgb(253,219,199)",
-                12,
-                "rgb(178,24,43)",
-              ],
-            },
-            "o3": {
-              "fill-color": [
-                "interpolate",
-                ["linear"],
-                ["get", "o3"],
-                0,
-                "rgba(33,102,172,0)",
-                50,
-                "rgb(103,169,207)",
-                100,
-                "rgb(253,219,199)",
-                150,
-                "rgb(178,24,43)",
-              ],
-            },
-            // TODO add other pollutants
-          };
 
           const interpolations = interpolationsMap[pollutant] || {};
           map.current.addLayer({
@@ -134,154 +133,85 @@ const Map = ({ combinedData }: MapProps) => {
             type: "fill",
             source: featureCollection.source,
             layout: {
-              visibility: "visible",
+              visibility: pollutant === "pm2.5" ? "visible" : "none",
             },
             paint: {
-              ...interpolations,
+              "fill-color": interpolations,
               "fill-opacity": 0.2,
               "fill-outline-color": "blue",
             },
           });
         } else {
-          map.current.addLayer({
-            id: "pm2.5" + featureCollection.source,
-            type: "circle",
-            source: featureCollection.source,
-            filter: ["has", "pm2.5"],
-            paint: {
-              "circle-color": [
-                "interpolate",
-                ["linear"],
-                ["get", "pm2.5"],
-                0,
-                "rgba(33,102,172,0)",
-                20,
-                "rgb(103,169,207)",
-                40,
-                "rgb(253,219,199)",
-                60,
-                "rgb(178,24,43)",
-              ],
-            },
-            layout: {
-              visibility: "visible",
-            },
-          });
-
-          // //TODO broken(?)
-          // map.current.addLayer({
-          //   id: "voc" + featureCollection.source,
-          //   type: "circle",
-          //   source: featureCollection.source,
-          //   filter: ["has", "voc"],
-          //   paint: {
-          //     "circle-color": [
-          //       "interpolate",
-          //       ["linear"],
-          //       ["get", "voc"],
-          //       80,
-          //       "rgba(33,102,172,0)",
-          //       90,
-          //       "rgb(103,169,207)",
-          //       100,
-          //       "rgb(253,219,199)",
-          //       110,
-          //       "rgb(178,24,43)",
-          //     ],
-          //   },
-          //   layout: {
-          //     visibility: "visible",
-          //   },
-          // });
-
-          // //TODO broken(?)
-          // map.current.addLayer({
-          //   id: "no2" + featureCollection.source,
-          //   type: "circle",
-          //   source: featureCollection.source,
-          //   filter: ["has", "no2"],
-          //   paint: {
-          //     "circle-color": [
-          //       "interpolate",
-          //       ["linear"],
-          //       ["get", "no2"],
-          //       80,
-          //       "rgba(33,102,172,0)",
-          //       90,
-          //       "rgb(103,169,207)",
-          //       100,
-          //       "rgb(253,219,199)",
-          //       110,
-          //       "rgb(178,24,43)",
-          //     ],
-          //   },
-          //   layout: {
-          //     visibility: "visible",
-          //   },
-          // });
+          pollutants.map((pollutant) =>
+            map.current.addLayer({
+              id: pollutant + featureCollection.source,
+              type: "circle",
+              source: featureCollection.source,
+              filter: ["has", pollutant],
+              paint: {
+                "circle-color": interpolationsMap[pollutant],
+              },
+              layout: {
+                visibility: pollutant === "pm2.5" ? "visible" : "none",
+              },
+            })
+          );
         }
       });
     });
 
-    // TODO this toggle menu is defunct for now, needs to be rewritten
-    // sensor types (e.g. plume/waqi) need to be combined
-    // e.g. toggle pm10 view for all pm10 layers (rather than by sensor type)
+    map.current.on("idle", () => {
+      for (const id of pollutants) {
+        if (document.getElementById(id)) {
+          continue;
+        }
 
-    // map.current.on("idle", () => {
-    //   // If these two layers were not added to the map, abort
-    //   if (
-    //     !map.current.getLayer("pm10") ||
-    //     !map.current.getLayer("voc") ||
-    //     !map.current.getLayer("no2")
-    //   )
-    //     return;
+        const link = document.createElement("a");
+        link.id = id;
+        link.href = "#";
+        link.textContent = id.toUpperCase();
+        link.className = (id === "pm2.5" ? "active" : "");
 
-    //   // Enumerate ids of the layers.
-    //   const toggleableLayerIds = ["pm10", "voc", "no2"];
+        link.onclick = function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const layerIDs = map.current
+            .getStyle()
+            .layers.map((layer) => layer.id)
+            .filter((layerID) =>
+            pollutants.some((pollutant) => layerID.includes(pollutant) || layerID.includes("voronoi"))
+          );
+          const matchingLayers = layerIDs.filter((layerID) =>
+            layerID.startsWith(this.id) || (layerID.includes("voronoi") && layerID.includes(this.id))
+          );
 
-    //   // Set up the corresponding toggle button for each layer.
-    //   for (const id of toggleableLayerIds) {
-    //     // Skip layers that already have a button set up.
-    //     if (document.getElementById(id)) {
-    //       continue;
-    //     }
+          matchingLayers.forEach(layerID => {
+            const visibility = map.current.getLayoutProperty(layerID, "visibility");
+        
+            if (visibility === "visible") {
+              map.current.setLayoutProperty(layerID, "visibility", "none");
+              this.className = "";
+            } else {
+              this.className = "active";
+              map.current.setLayoutProperty(layerID, "visibility", "visible");
+            }
+          });
+        
+          layerIDs.forEach(layerID => {
+            if (!matchingLayers.includes(layerID)) {
+              map.current.setLayoutProperty(layerID, "visibility", "none");
+              const layerLink = document.getElementById(pollutants.find(p => layerID.includes(p)));
+              if (layerLink) {
+                layerLink.className = "";
+              }
+            }
+          });
+        };
 
-    //     // Create a link.
-    //     const link = document.createElement("a");
-    //     link.id = id;
-    //     link.href = "#";
-    //     link.textContent = "toggle " + id;
-    //     link.className = "active";
-
-    //     // Show or hide layer when the toggle is clicked.
-    //     link.onclick = function (e) {
-    //       const clickedLayer = this.id;
-    //       e.preventDefault();
-    //       e.stopPropagation();
-
-    //       const visibility = map.current.getLayoutProperty(
-    //         clickedLayer,
-    //         "visibility"
-    //       );
-
-    //       // Toggle layer visibility by changing the layout object's visibility property.
-    //       if (visibility === "visible") {
-    //         map.current.setLayoutProperty(clickedLayer, "visibility", "none");
-    //         this.className = "";
-    //       } else {
-    //         this.className = "active";
-    //         map.current.setLayoutProperty(
-    //           clickedLayer,
-    //           "visibility",
-    //           "visible"
-    //         );
-    //       }
-    //     };
-
-    //     const layers = document.getElementById("menu");
-    //     layers.appendChild(link);
-    //   }
-    // });
+        const layers = document.getElementById("menu");
+        layers.appendChild(link);
+      }
+    });
 
     map.current.addControl(new mapboxgl.NavigationControl());
   });
@@ -307,7 +237,7 @@ const Map = ({ combinedData }: MapProps) => {
   return (
     <>
       <div ref={mapContainer} className="map-container">
-        {/* <nav id="menu" /> */}
+        <nav id="menu" />
       </div>
       <p>loaded {locations ? locations.length : ""} data sources</p>
       {getNumDataPoints()}
