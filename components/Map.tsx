@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import Title from "./Title";
 import "mapbox-gl/dist/mapbox-gl.css";
 import * as turf from "@turf/turf";
 import { FeatureCollection } from "@turf/turf";
+import Paper from "@mui/material/Paper";
 import RainLayer from "mapbox-gl-rain-layer";
 
 type MapProps = {
@@ -103,10 +105,10 @@ const Map = ({ combinedData }: MapProps) => {
       zoom: zoom,
     });
     map.current.on("load", () => {
-      map.current.addLayer(rainLayer);
-      rainLayer.on("refresh", (data: { timestamp: number }) => {
-        setRainUpdateTimestamp(new Date(data.timestamp * 1000));
-      });
+      // map.current.addLayer(rainLayer);
+      // rainLayer.on("refresh", (data: { timestamp: number }) => {
+      //   setRainUpdateTimestamp(new Date(data.timestamp * 1000));
+      // });
       locations.map((featureCollection) => {
         if (!map.current.getSource(featureCollection.source)) {
           map.current.addSource(featureCollection.source, {
@@ -124,7 +126,6 @@ const Map = ({ combinedData }: MapProps) => {
         }
         if (featureCollection.source.includes("voronoi")) {
           const pollutant = featureCollection.source.split("-")[0];
-          console.log(featureCollection.data);
           // defining the linear interpolation colour coding values for each pollutant
 
           const interpolations = interpolationsMap[pollutant] || {};
@@ -170,7 +171,7 @@ const Map = ({ combinedData }: MapProps) => {
         link.id = id;
         link.href = "#";
         link.textContent = id.toUpperCase();
-        link.className = (id === "pm2.5" ? "active" : "");
+        link.className = id === "pm2.5" ? "active" : "";
 
         link.onclick = function (e) {
           e.preventDefault();
@@ -179,15 +180,23 @@ const Map = ({ combinedData }: MapProps) => {
             .getStyle()
             .layers.map((layer) => layer.id)
             .filter((layerID) =>
-            pollutants.some((pollutant) => layerID.includes(pollutant) || layerID.includes("voronoi"))
-          );
-          const matchingLayers = layerIDs.filter((layerID) =>
-            layerID.startsWith(this.id) || (layerID.includes("voronoi") && layerID.includes(this.id))
+              pollutants.some(
+                (pollutant) =>
+                  layerID.includes(pollutant) || layerID.includes("voronoi")
+              )
+            );
+          const matchingLayers = layerIDs.filter(
+            (layerID) =>
+              layerID.startsWith(this.id) ||
+              (layerID.includes("voronoi") && layerID.includes(this.id))
           );
 
-          matchingLayers.forEach(layerID => {
-            const visibility = map.current.getLayoutProperty(layerID, "visibility");
-        
+          matchingLayers.forEach((layerID) => {
+            const visibility = map.current.getLayoutProperty(
+              layerID,
+              "visibility"
+            );
+
             if (visibility === "visible") {
               map.current.setLayoutProperty(layerID, "visibility", "none");
               this.className = "";
@@ -196,11 +205,13 @@ const Map = ({ combinedData }: MapProps) => {
               map.current.setLayoutProperty(layerID, "visibility", "visible");
             }
           });
-        
-          layerIDs.forEach(layerID => {
+
+          layerIDs.forEach((layerID) => {
             if (!matchingLayers.includes(layerID)) {
               map.current.setLayoutProperty(layerID, "visibility", "none");
-              const layerLink = document.getElementById(pollutants.find(p => layerID.includes(p)));
+              const layerLink = document.getElementById(
+                pollutants.find((p) => layerID.includes(p))
+              );
               if (layerLink) {
                 layerLink.className = "";
               }
@@ -236,19 +247,28 @@ const Map = ({ combinedData }: MapProps) => {
 
   return (
     <>
-      <div ref={mapContainer} className="map-container">
-        <nav id="menu" />
-      </div>
+      <Paper
+        sx={{
+          p: 2,
+          display: "flex",
+          flexDirection: "column",
+          height: 600,
+        }}
+      >
+        <div ref={mapContainer} className="map-container">
+          <nav id="menu" />
+        </div>
+      </Paper>
       <p>loaded {locations ? locations.length : ""} data sources</p>
       {getNumDataPoints()}
-      <p>
+      {/* <p>
         Rain data last updated:{" "}
         {rainUpdateTimestamp.toLocaleTimeString("en-GB")}
       </p>
       <p>
         Rain data last updated:{" "}
         {rainUpdateTimestamp.toLocaleDateString("en-GB")}
-      </p>
+      </p> */}
     </>
   );
 };
