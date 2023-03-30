@@ -23,27 +23,17 @@ export default function ChartContainer({ chart }) {
           height: 240,
         }}
       >
-
         {visibleChart === CONTAINER_STATE.annual && (
-          <Chart
-            data={JSON.parse(chart.year)}
-            titlePrefix={"Last 365 days' "}
-          />
+          <Chart data={JSON.parse(chart.year)} titlePrefix={"last 365 days"} />
         )}
         {visibleChart === CONTAINER_STATE.monthly && (
-          <Chart
-            data={JSON.parse(chart.month)}
-            titlePrefix={"Last 30 days' "}
-          />
+          <Chart data={JSON.parse(chart.month)} titlePrefix={"last 30 days"} />
         )}
         {visibleChart === CONTAINER_STATE.weekly && (
-          <Chart data={JSON.parse(chart.week)} titlePrefix={"Last 7 days' "} />
+          <Chart data={JSON.parse(chart.week)} titlePrefix={"last 7 days"} />
         )}
         {visibleChart === CONTAINER_STATE.daily && (
-          <Chart
-            data={JSON.parse(chart.yesterday)}
-            titlePrefix={"Yesterday's "}
-          />
+          <Chart data={JSON.parse(chart.yesterday)} titlePrefix={"yesterday"} />
         )}
       </Paper>
       <Button onClick={() => setVisibleChart(CONTAINER_STATE.annual)}>

@@ -7,7 +7,7 @@ import { FeatureCollection } from "@turf/turf";
 type MapProps = {
   combinedData: {
     source: string;
-    data: {features:FeatureCollection[]};
+    data: { features: FeatureCollection[] };
   }[];
 };
 
@@ -21,7 +21,7 @@ const Map = ({ combinedData }: MapProps) => {
   const [locations, setLocations] = useState<
     {
       source: string;
-      data: {features: FeatureCollection[]};
+      data: { features: FeatureCollection[] };
     }[]
   >([]);
 
@@ -29,9 +29,9 @@ const Map = ({ combinedData }: MapProps) => {
     if (locations.length == 0) {
       // removing null geometries - https://github.com/willymaps/voronoihover/blob/master/js/voronoihover.js
 
-
       let collection = turf.featureCollection([
-        ...combinedData.map((x) => x.data.features)
+        ...combinedData
+          .map((x) => x.data.features)
           .reduce((prev, current) => [...prev, ...current]),
       ]);
 

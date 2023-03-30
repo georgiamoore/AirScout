@@ -18,8 +18,7 @@ export default function Chart({ data, titlePrefix }) {
   return (
     <React.Fragment>
       <Title>
-        {titlePrefix}
-        {Object.keys(data[0])[1]} levels
+        Average {Object.keys(data[0])[1]} ({titlePrefix})
       </Title>
       <ResponsiveContainer>
         <LineChart
@@ -41,7 +40,12 @@ export default function Chart({ data, titlePrefix }) {
             stroke={theme.palette.text.secondary}
             style={theme.typography.body2}
           >
-            <Tooltip />
+            <Tooltip
+              active={true}
+              wrapperStyle={{
+                visibility: "visible",
+              }}
+            />
             <Label
               angle={270}
               position="left"
@@ -58,7 +62,7 @@ export default function Chart({ data, titlePrefix }) {
           <Line
             type="monotone"
             dataKey={Object.keys(data[0])[1]}
-            stroke={theme.palette.primary.main}
+            stroke={"#E31C79"}
             activeDot={{ r: 8 }}
           />
         </LineChart>

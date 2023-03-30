@@ -1,6 +1,6 @@
 // FROM https://github.com/mui/material-ui/blob/v5.11.9/docs/data/material/getting-started/templates/dashboard/Title.tsx
-import * as React from 'react';
-import Typography from '@mui/material/Typography';
+import * as React from "react";
+import Typography from "@mui/material/Typography";
 
 interface TitleProps {
   children?: React.ReactNode;

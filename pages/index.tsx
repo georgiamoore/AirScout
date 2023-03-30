@@ -43,10 +43,7 @@ const Home: NextPage = () => {
   };
 
   const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
-    apiURL + "/plume",
-    apiURL + "/waqi",
-    apiURL + "/waqi-archive",
-    apiURL + "/aston",
+    // apiURL + "/aston",
     apiURL + "/defra?pollutants=PM2.5",
   ]);
   //TODO should parameterise this to make adding new pollutants easier
@@ -69,9 +66,9 @@ const Home: NextPage = () => {
       {/* <Header></Header> */}
       <main className={styles.main}>
         <Container fixed sx={{ minWidth: "250px" }}>
-          {/* {mapData && (
+          {mapData && (
             <Map combinedData={mapData}/>
-          )} */}
+          )}
         </Container>
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Grid
