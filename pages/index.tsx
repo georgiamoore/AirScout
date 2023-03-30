@@ -44,18 +44,37 @@ const Home: NextPage = () => {
 
   const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
     // apiURL + "/aston",
-    apiURL + "/defra?pollutants=PM2.5",
+    apiURL + "/defra?pollutants=pm2.5",
   ]);
-  //TODO should parameterise this to make adding new pollutants easier
-  const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
-    apiURL + "/stats?pollutants=PM2.5",
-    apiURL + "/stats?pollutants=PM10",
-    apiURL + "/stats?pollutants=O3",
-    apiURL + "/stats?pollutants=NO2",
-    apiURL + "/stats?pollutants=SO2",
-  ]);
-
-  if (mapDataLoading || chartDataLoading) return <div>Loading...</div>;
+  const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
+  const chartUrls = pollutants.map(pollutant => `${apiURL}/stats?pollutants=${pollutant}`);
+ 
+  const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests(chartUrls);
+  
+  let map, chart;
+  if (mapDataLoading) {
+    map = <div>Loading map...</div>;
+    //TODO replace with placeholder component
+  } else if (mapData) {
+    map = <Map combinedData={mapData} />;
+  }
+  if (chartDataLoading) {
+    //TODO replace with placeholder components (based on chartUrls.length)
+    chart = <div>Loading charts...</div>;
+  } else if (chartData) {
+    chart = (
+      <>
+        {chartData.map((chart) => (
+          <ChartContainer
+            chart={chart}
+            //TODO this key is so disgusting haha there has to be a way to simplify it
+            //retrieving pollutant name
+            key={Object.keys(chart.year[0])[1] + "container"}
+          />
+        ))}
+      </>
+    );
+  }
   return (
     <div className={styles.container}>
       <Head>
@@ -66,9 +85,10 @@ const Home: NextPage = () => {
       {/* <Header></Header> */}
       <main className={styles.main}>
         <Container fixed sx={{ minWidth: "250px" }}>
-          {mapData && (
+          {/* {mapData && (
             <Map combinedData={mapData}/>
-          )}
+          )} */}
+          {map}
         </Container>
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Grid
@@ -76,7 +96,7 @@ const Home: NextPage = () => {
             spacing={{ xs: 2, md: 3 }}
             columns={{ xs: 1, sm: 4, md: 12 }}
           >
-            {chartData && (
+            {/* {chartData && (
               <>
                 {chartData.map((chart) => (
                   <ChartContainer chart={chart} 
@@ -84,8 +104,8 @@ const Home: NextPage = () => {
                   key={Object.keys(JSON.parse(chart.year)[0])[1]+'container'} />
                 ))}
               </>
-            )}
-            
+            )} */}
+            {chart}
           </Grid>
           {/* <Copyright sx={{ pt: 4 }} /> */}
         </Container>

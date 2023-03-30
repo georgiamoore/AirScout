@@ -18,7 +18,7 @@ export default function Chart({ data, titlePrefix }) {
   return (
     <React.Fragment>
       <Title>
-        Average {Object.keys(data[0])[1]} ({titlePrefix})
+        Average {Object.keys(data[0])[1].toUpperCase()} ({titlePrefix})
       </Title>
       <ResponsiveContainer>
         <LineChart
