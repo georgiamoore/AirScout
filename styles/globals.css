@@ -30,11 +30,13 @@ a {
   left: 10px;
   border-radius: 3px;
   width: 120px;
+  border-radius: 0.5rem;
   border: 1px solid rgba(0, 0, 0, 0.4);
   font-family: 'Open Sans', sans-serif;
-  }
-   
-  #menu a {
+}
+
+#menu a {
+    
   font-size: 13px;
   color: #404040;
   display: block;
@@ -44,24 +46,28 @@ a {
   text-decoration: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.25);
   text-align: center;
-  }
-   
-  #menu a:last-child {
+}
+#menu a:first-child{
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+#menu a:last-child {
+  border-radius: 0 0 0.5rem 0.5rem ;
   border: none;
-  }
-   
-  #menu a:hover {
+}
+
+#menu a:hover {
   background-color: #f8f8f8;
   color: #404040;
-  }
-   
-  #menu a.active {
-  background-color: #3887be;
+}
+
+#menu a.active {
+  background-color:rgb(79 70 229) ;
   color: #ffffff;
   }
    
   #menu a.active:hover {
-  background: #3074a4;
+  background: rgb(67 56 202);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
 
 @media (prefers-color-scheme: dark) {
