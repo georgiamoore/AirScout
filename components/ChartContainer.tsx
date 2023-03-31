@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import Chart from "../components/Chart";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import { Button } from "@mui/material";
-import LineChart from "./AlternateChart";
+import LineChart from "./LineChart";
 
 export default function ChartContainer({ chart }) {
   
@@ -22,7 +21,7 @@ export default function ChartContainer({ chart }) {
           p: 2,
           display: "flex",
           flexDirection: "column",
-          height: 240,
+          height: 280,
         }}
       >
         {visibleChart === CONTAINER_STATE.annual && (
@@ -32,7 +31,7 @@ export default function ChartContainer({ chart }) {
           <LineChart data={chart.month} titlePrefix={"last 30 days"} />
         )}
         {visibleChart === CONTAINER_STATE.weekly && (
-          <Chart data={chart.week} titlePrefix={"last 7 days"} />
+          <LineChart data={chart.week} titlePrefix={"last 7 days"} />
         )}
         {visibleChart === CONTAINER_STATE.daily && (
           <LineChart data={chart.yesterday} titlePrefix={"yesterday"} />
