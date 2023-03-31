@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
-import { Button } from "@mui/material";
+import { Button as MUIButton } from "@mui/material";
+import Button from "./Button";
 import LineChart from "./LineChart";
 
 export default function ChartContainer({ chart }) {
@@ -13,15 +14,17 @@ export default function ChartContainer({ chart }) {
     daily: "daily",
   };
   const [visibleChart, setVisibleChart] = useState(CONTAINER_STATE.monthly);
-  // TODO handle empty data here
+
   return (
-    <Grid item xs={2} sm={4} md={4}>
+    <Grid item xs={2} sm={4} md={6}>
       <Paper
         sx={{
           p: 2,
           display: "flex",
           flexDirection: "column",
-          height: 280,
+          alignItems:"center",
+          justifyContent:"center",
+          height: 350,
         }}
       >
         {visibleChart === CONTAINER_STATE.annual && (
@@ -36,19 +39,14 @@ export default function ChartContainer({ chart }) {
         {visibleChart === CONTAINER_STATE.daily && (
           <LineChart data={chart.yesterday} titlePrefix={"yesterday"} />
         )}
+        <div className={"flex-grow"} />
+        <div>
+          <Button onClick={() => setVisibleChart(CONTAINER_STATE.annual)}>Annual</Button>
+          <Button onClick={() => setVisibleChart(CONTAINER_STATE.monthly)}>Monthly</Button>
+          <Button onClick={() => setVisibleChart(CONTAINER_STATE.weekly)}>Weekly</Button>
+          <Button onClick={() => setVisibleChart(CONTAINER_STATE.daily)}>Daily</Button>
+        </div>
       </Paper>
-      <Button onClick={() => setVisibleChart(CONTAINER_STATE.annual)}>
-        Annual
-      </Button>
-      <Button onClick={() => setVisibleChart(CONTAINER_STATE.monthly)}>
-        Monthly
-      </Button>
-      <Button onClick={() => setVisibleChart(CONTAINER_STATE.weekly)}>
-        Weekly
-      </Button>
-      <Button onClick={() => setVisibleChart(CONTAINER_STATE.daily)}>
-        Daily
-      </Button>
     </Grid>
   );
 }
