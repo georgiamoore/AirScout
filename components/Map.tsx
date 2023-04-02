@@ -75,7 +75,7 @@ const Map = ({ combinedData }: MapProps) => {
         ...combinedData
           .filter((x) => x.data.features)
           .map((x) => x.data.features)
-          .reduce((prev, current) => [...prev, ...current]),
+          .reduce((prev, current) => [...prev, ...current], []), // the [] here is used if no features are found (i.e. no API update)
       ]);
 
       const voronoiCollection = pollutants.map((pollutant) => {
@@ -86,10 +86,6 @@ const Map = ({ combinedData }: MapProps) => {
       });
       setLocations([
         ...combinedData,
-        // {
-        //   source: "pm2.5-voronoi",
-        //   data: collectWithFilter(collection, "pm2.5"),
-        // },
         ...voronoiCollection,
       ]);
     }
