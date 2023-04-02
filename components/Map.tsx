@@ -15,15 +15,13 @@ type MapProps = {
   }[];
 };
 const createInterpolationsMap = (pollutantName, valueRanges) => {
-  const interpolations = [    "interpolate",    ["linear"],
-    ["get", pollutantName],
-  ];
-  
+  const interpolations = ["interpolate", ["linear"], ["get", pollutantName]];
+
   for (let i = 0; i < valueRanges.length; i++) {
     interpolations.push(valueRanges[i].range[0]);
     interpolations.push(valueRanges[i].colour);
   }
-  
+
   return interpolations;
 };
 
@@ -41,11 +39,14 @@ const Map = ({ combinedData }: MapProps) => {
     rainColor: "#0703fc",
   });
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
-  const interpolationsMap = {}
+  const interpolationsMap = {};
   pollutants.map((pollutant) => {
-    interpolationsMap[pollutant] = createInterpolationsMap(pollutant, pollutantValueRanges[pollutant]);
+    interpolationsMap[pollutant] = createInterpolationsMap(
+      pollutant,
+      pollutantValueRanges[pollutant]
+    );
   });
-  
+
   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [locations, setLocations] = useState<
     {
@@ -71,10 +72,7 @@ const Map = ({ combinedData }: MapProps) => {
           data: collectWithFilter(collection, pollutant),
         };
       });
-      setLocations([
-        ...combinedData,
-        ...voronoiCollection,
-      ]);
+      setLocations([...combinedData, ...voronoiCollection]);
     }
   }, [combinedData, locations.length]);
 
@@ -122,7 +120,19 @@ const Map = ({ combinedData }: MapProps) => {
             paint: {
               "fill-color": interpolations,
               "fill-opacity": 0.2,
-              "fill-outline-color": "blue",
+              "fill-outline-color": interpolations,
+            },
+          });
+          map.current.addLayer({
+            id: "voronoi-line-" + pollutant,
+            type: "line",
+            source: featureCollection.source,
+            layout: {
+              visibility: pollutant === "pm2.5" ? "visible" : "none",
+            },
+            paint: {
+              "line-width": 2,
+              "line-color": interpolations,
             },
           });
         } else {
@@ -134,6 +144,9 @@ const Map = ({ combinedData }: MapProps) => {
               filter: ["has", pollutant],
               paint: {
                 "circle-color": interpolationsMap[pollutant],
+                "circle-radius": 6,
+                "circle-stroke-width": 2,
+                "circle-stroke-color": "#ffffff",
               },
               layout: {
                 visibility: pollutant === "pm2.5" ? "visible" : "none",
