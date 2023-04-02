@@ -6,12 +6,25 @@ import * as turf from "@turf/turf";
 import { FeatureCollection } from "@turf/turf";
 import Paper from "@mui/material/Paper";
 import RainLayer from "mapbox-gl-rain-layer";
+import { pollutantValueRanges } from "../utils";
 
 type MapProps = {
   combinedData: {
     source: string;
     data: { features: FeatureCollection[] };
   }[];
+};
+const createInterpolationsMap = (pollutantName, valueRanges) => {
+  const interpolations = [    "interpolate",    ["linear"],
+    ["get", pollutantName],
+  ];
+  
+  for (let i = 0; i < valueRanges.length; i++) {
+    interpolations.push(valueRanges[i].range[0]);
+    interpolations.push(valueRanges[i].colour);
+  }
+  
+  return interpolations;
 };
 
 const Map = ({ combinedData }: MapProps) => {
@@ -28,37 +41,11 @@ const Map = ({ combinedData }: MapProps) => {
     rainColor: "#0703fc",
   });
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
-  const interpolationsMap = {
-    "pm2.5": [
-      "interpolate",
-      ["linear"],
-      ["get", "pm2.5"],
-      0,
-      "rgba(33,102,172,0)",
-      4,
-      "rgb(103,169,207)",
-      8,
-      "rgb(253,219,199)",
-      12,
-      "rgb(178,24,43)",
-    ],
-
-    o3: [
-      "interpolate",
-      ["linear"],
-      ["get", "o3"],
-      0,
-      "rgba(33,102,172,0)",
-      50,
-      "rgb(103,169,207)",
-      100,
-      "rgb(253,219,199)",
-      150,
-      "rgb(178,24,43)",
-    ],
-
-    // TODO add other pollutants
-  };
+  const interpolationsMap = {}
+  pollutants.map((pollutant) => {
+    interpolationsMap[pollutant] = createInterpolationsMap(pollutant, pollutantValueRanges[pollutant]);
+  });
+  
   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [locations, setLocations] = useState<
     {
