@@ -12,7 +12,7 @@ import { pollutantUnits, pollutantValueRanges } from "../utils";
 
 export default function LineChart({ data, titlePrefix }) {
   const chartRef = useRef(null);
-  
+
   if (!data[0]) {
     return <Title>No data for this time period. ({titlePrefix})</Title>;
   }
@@ -60,7 +60,7 @@ export default function LineChart({ data, titlePrefix }) {
       <Title>
         Average {chartSubject.toUpperCase()} ({pollutantUnits[chartSubject]}) ({titlePrefix})
       </Title>
-      <div class="chart-container" style={{"position": "relative", "height":"100%", "width":"100%"}}>
+      <div className="chart-container" style={{"position": "relative", "height":"100%", "width":"100%"}}>
       <Line
         ref={chartRef}
         data={chartData}
