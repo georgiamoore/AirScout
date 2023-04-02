@@ -56,7 +56,7 @@ const Home: NextPage = () => {
     // const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston',
     //               apiURL + '/defra?pollutants=PM2.5', apiURL + '/defra_bmld', apiURL + '/defra_bold']
     const { data, error } = useSWR(urls, multipleFetcher);
-    // console.log(data)
+
     return {
       data: data,
       isError: !!error,
@@ -71,12 +71,13 @@ const Home: NextPage = () => {
     apiURL + "/defra",
   ]);
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
-  const chartUrls = pollutants.map(
-    (pollutant) => `${apiURL}/stats?pollutants=${pollutant}`
-  );
+  // const chartUrls = pollutants.map(
+  //   (pollutant) => `${apiURL}/stats?pollutants=${pollutant}`
+  // );
 
-  const { data: chartData, isLoading: chartDataLoading } =
-    useMultipleRequests(chartUrls);
+  const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
+    `${apiURL}/stats`,
+  ]);
 
   let MapComponent, Charts;
   if (mapDataLoading) {
@@ -85,19 +86,38 @@ const Home: NextPage = () => {
     MapComponent = <Map combinedData={mapData} />;
   }
   if (chartDataLoading) {
-    //TODO replace with placeholder components (based on chartUrls.length)
-    Charts = chartUrls.map((chart) => ChartPlaceholder);
+    Charts = pollutants.map((pollutant) => ChartPlaceholder);
   } else if (chartData) {
+    const timePeriods = Object.keys(chartData[0]);
+    const filterChartDataByPollutant = (pollutant) => {
+      return chartData.map((data) => {
+        const filtered = {};
+        timePeriods.forEach((timePeriod) => {
+          filtered[timePeriod] = data[timePeriod].map(
+            ({ timestamp, ...prev }) => {
+              const obj = {};
+              obj.timestamp = timestamp;
+              obj[pollutant] = prev[pollutant];
+
+              return obj;
+            }
+          );
+        });
+        return filtered;
+      })[0];
+    };
+
     Charts = (
       <>
-        {chartData.map((chart) => (
-          <ChartContainer
-            chart={chart}
-            //TODO this key is so disgusting haha there has to be a way to simplify it
-            //retrieving pollutant name
-            key={Object.keys(chart.year[0])[1] + "container"}
-          />
-        ))}
+        {pollutants.map((pollutant) => {
+          return (
+            <ChartContainer
+              chart={filterChartDataByPollutant(pollutant)}
+              key={pollutant + "container"}
+            />
+            // )
+          );
+        })}
       </>
     );
   }
