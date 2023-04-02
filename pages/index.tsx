@@ -133,11 +133,11 @@ const Home: NextPage = () => {
           {/* <Title>Map of pollutant data</Title> */}
           {MapComponent}
         </Container>
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
           <Grid
             container
             spacing={{ xs: 2, md: 3 }}
-            columns={{ xs: 1, sm: 4, md: 12 }}
+            columns={{ xs: 1, sm: 2, md: 12 }}
           >
             {Charts}
           </Grid>

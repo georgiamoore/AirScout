@@ -16,7 +16,7 @@ export default function ChartContainer({ chart }) {
   const [visibleChart, setVisibleChart] = useState(CONTAINER_STATE.monthly);
 
   return (
-    <Grid item xs={2} sm={4} md={6}>
+    <Grid item xs={2} sm={2} md={4}>
       <Paper
         sx={{
           p: 2,
