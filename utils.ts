@@ -41,7 +41,7 @@ export const pollutantUnits = {
   // TODO check these units
   pm10: "µg/m³",
   "pm2.5": "µg/m³",
-  o3: "µg/m3",
-  no2: "µg/m3",
-  so2: "µg/m3",
+  o3: "µg/m³",
+  no2: "µg/m³",
+  so2: "µg/m³",
 };

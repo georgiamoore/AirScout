@@ -59,7 +59,25 @@ const Map = ({ combinedData }: MapProps) => {
     if (locations.length == 0) {
       // removing null geometries - https://github.com/willymaps/voronoihover/blob/master/js/voronoihover.js
 
-      let collection = turf.featureCollection([
+      // removing properties where value is null (to prevent black spots on map where no pollutant data is available)
+      combinedData = combinedData.filter((x) =>
+        x.data.features
+          .map((feature) => {
+            Object.keys(feature.properties).forEach((key) => {
+              if (isNaN(feature.properties[key])) {
+                delete feature.properties[key];
+              }
+            });
+            return feature;
+          })
+          .filter((feature) => {
+            return Object.values(feature.properties).every((value) => {
+              return value !== null;
+            });
+          })
+      );
+
+      let reducedCollection = turf.featureCollection([
         ...combinedData
           .filter((x) => x.data.features)
           .map((x) => x.data.features)
@@ -69,7 +87,7 @@ const Map = ({ combinedData }: MapProps) => {
       const voronoiCollection = pollutants.map((pollutant) => {
         return {
           source: pollutant + "-voronoi",
-          data: collectWithFilter(collection, pollutant),
+          data: collectWithFilter(reducedCollection, pollutant),
         };
       });
       setLocations([...combinedData, ...voronoiCollection]);
@@ -110,6 +128,7 @@ const Map = ({ combinedData }: MapProps) => {
           // defining the linear interpolation colour coding values for each pollutant
 
           const interpolations = interpolationsMap[pollutant] || {};
+
           map.current.addLayer({
             id: "voronoi-" + pollutant,
             type: "fill",
