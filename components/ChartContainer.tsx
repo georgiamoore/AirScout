@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
-import { Button as MUIButton } from "@mui/material";
 import Button from "./Button";
 import LineChart from "./LineChart";
 
@@ -25,6 +24,9 @@ export default function ChartContainer({ chart }) {
           alignItems:"center",
           justifyContent:"center",
           height: 350,
+          // minHeight: 350,
+          // height: "auto"
+          // overflow:"auto"
         }}
       >
         {visibleChart === CONTAINER_STATE.annual && (

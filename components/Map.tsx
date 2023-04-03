@@ -255,8 +255,8 @@ const Map = ({ combinedData }: MapProps) => {
           <nav id="menu" />
         </div>
       </Paper>
-      <p>loaded {locations ? locations.length : ""} data sources</p>
-      {getNumDataPoints()}
+      {/* <p>loaded {locations ? locations.length : ""} data sources</p>
+      {getNumDataPoints()} */}
       {/* <p>
         Rain data last updated:{" "}
         {rainUpdateTimestamp.toLocaleTimeString("en-GB")}
@@ -286,7 +286,7 @@ const collectWithFilter = (collection, propertyName) => {
     if (voronoiPolygons.features[i] != null) {
       let featurePush = {
         type: "Feature",
-        properties: collection.features[i].properties,
+        properties: filteredFeatures.features[i].properties,
         geometry: voronoiPolygons.features[i].geometry,
       };
       filteredVoronoiFeatures.features.push(featurePush);

@@ -11,12 +11,14 @@ import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import useSWR from "swr";
 import Title from "../components/Title";
+import Score from "../components/Score";
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 const MapPlaceholder = (
   <ContentLoader width="100%" height="600">
     <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
   </ContentLoader>
 );
+
 const ChartPlaceholder = (
   <Grid item xs={2} sm={4} md={4}>
     <Paper
@@ -33,6 +35,25 @@ const ChartPlaceholder = (
     </Paper>
   </Grid>
 );
+
+const ScorePlaceholder = (
+  <Paper
+      sx={{
+        p: 2,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: { md: 600, sm: 350 },
+      }}
+    >
+      <Title>Score</Title>
+  <ContentLoader width="100%" height="100%">
+    <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
+  </ContentLoader>
+  </Paper>
+)
+
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => MapPlaceholder,
   ssr: false,
@@ -78,13 +99,17 @@ const Home: NextPage = () => {
   const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
     `${apiURL}/stats`,
   ]);
+  const { data: daqiData, isLoading: daqiDataLoading } = useMultipleRequests([
+    `${apiURL}/daqi`,
+  ]);
 
-  let MapComponent, Charts;
+  let MapComponent, Charts, ScoreComponent;
   if (mapDataLoading) {
     MapComponent = MapPlaceholder;
   } else if (mapData) {
     MapComponent = <Map combinedData={mapData} />;
   }
+
   if (chartDataLoading) {
     Charts = pollutants.map((pollutant) => ChartPlaceholder);
   } else if (chartData) {
@@ -121,6 +146,12 @@ const Home: NextPage = () => {
       </>
     );
   }
+
+  if (daqiDataLoading) {
+    ScoreComponent = ScorePlaceholder;
+  } else if (daqiData) {
+    ScoreComponent = <Score score={daqiData[0]}/>
+  }
   return (
     <div className={styles.container}>
       <Head>
@@ -129,9 +160,22 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <Container fixed sx={{ minWidth: "250px" }}>
-          {/* <Title>Map of pollutant data</Title> */}
-          {MapComponent}
+        <Container fixed sx={{ minWidth: "250px" }} maxWidth="xl">
+          <Grid
+            container
+            spacing={2}
+            // container
+            // spacing={{ xs: 2, md: 3 }}
+            // columns={{ xs: 1, sm: 2 }}
+          >
+            <Grid item xs={12} md={3} >
+              {ScoreComponent}
+            </Grid>
+            {/* <Title>Map of pollutant data</Title> */}
+            <Grid item xs={12} md={9}>
+              {MapComponent}
+            </Grid>
+          </Grid>
         </Container>
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
           <Grid
