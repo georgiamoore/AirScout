@@ -188,7 +188,8 @@ const Map = ({ combinedData }: MapProps) => {
 
                 const tooltip = (
                   <>
-                    <Typography variant="h6">{station}</Typography>
+                  {/* TODO check below ternary works as expected */}
+                    <Typography variant="h6">{station !== undefined ? station : "Aston sensor"}</Typography>
                     <Typography variant="body1">
                       {"Average " +
                         pollutant.toUpperCase() +
