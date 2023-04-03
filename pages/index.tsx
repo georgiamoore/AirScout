@@ -9,11 +9,12 @@ import Container from "@mui/material/Container";
 import ChartContainer from "../components/ChartContainer";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
+import useSWRImmutable from "swr/immutable";
 import Title from "../components/Title";
 import Score from "../components/Score";
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
-
+const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
 let date = new Date();
 date.setDate(date.getDate() - 1);
 let yesterday = date.toLocaleDateString("en-GB", {
@@ -41,8 +42,9 @@ const MapPlaceholder = (
   </>
 );
 
-const ChartPlaceholder = (
-  <Grid item xs={2} sm={4} md={4}>
+const ChartPlaceholder = 
+  pollutants.map((pollutant) => (
+  <Grid item xs={2} sm={4} md={4} key={pollutant+"-chart-placeholder-container"}>
     <Paper
       sx={{
         p: 2,
@@ -56,6 +58,7 @@ const ChartPlaceholder = (
       </ContentLoader>
     </Paper>
   </Grid>
+  )
 );
 
 const ScorePlaceholder = (
@@ -98,7 +101,7 @@ const Home: NextPage = () => {
   const useMultipleRequests = (urls) => {
     // const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston',
     //               apiURL + '/defra?pollutants=PM2.5', apiURL + '/defra_bmld', apiURL + '/defra_bold']
-    const { data, error } = useSWR(urls, multipleFetcher);
+    const { data, error } = useSWRImmutable(urls, multipleFetcher);
 
     return {
       data: data,
@@ -113,7 +116,7 @@ const Home: NextPage = () => {
     // apiURL + "/defra?pollutants=pm2.5",
     apiURL + "/defra",
   ]);
-  const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
+
   // const chartUrls = pollutants.map(
   //   (pollutant) => `${apiURL}/stats?pollutants=${pollutant}`
   // );
@@ -133,7 +136,7 @@ const Home: NextPage = () => {
   }
 
   if (chartDataLoading) {
-    Charts = pollutants.map((pollutant) => ChartPlaceholder);
+    Charts = ChartPlaceholder;
   } else if (chartData) {
     const timePeriods = Object.keys(chartData[0]);
     const filterChartDataByPollutant = (pollutant) => {
@@ -172,7 +175,14 @@ const Home: NextPage = () => {
   if (daqiDataLoading) {
     ScoreComponent = ScorePlaceholder;
   } else if (daqiData) {
-    ScoreComponent = <Score score={daqiData[0]} />;
+    if (daqiData[0] === undefined) {
+      console.log(daqiDataLoading);
+      console.log(daqiData);
+      daqiDataLoading = true;
+      mutate([`${apiURL}/daqi`, multipleFetcher]);
+    } else {
+      ScoreComponent = <Score score={daqiData[0]} />;
+    }
   }
 
   return (

@@ -12,14 +12,9 @@ import ListItemText from "@mui/material/ListItemText";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Typography from "@mui/material/Typography";
 import Title from "./Title";
-import colors from "tailwindcss/colors";
 import { daqiColourMap } from "../utils";
-export default function Score({ score }) {
-  console.log(score);
-  console.log(
-    score.reduce((max, item) => (item.poll_index > max.poll_index ? item : max))
-  );
 
+export default function Score({ score }) {
   let highest = score.reduce((max, item) =>
     item.poll_index > max.poll_index ? item : max
   );
@@ -39,18 +34,18 @@ export default function Score({ score }) {
       <div className={"flex items-center m-2"}>
         <Avatar
           sx={{
-              bgcolor: daqiColourMap[highest.poll_index].colour,
-              width: 56,
-              height: 56,
-            }}
+            bgcolor: daqiColourMap[highest.poll_index].colour,
+            width: 56,
+            height: 56,
+          }}
         >
           {highest.poll_index}
         </Avatar>
-        <Typography className={`ms-2 text-xl `}>
+        <Typography component={"span"} className={`ms-2 text-xl `}>
           {daqiColourMap[highest.poll_index].meaning}
         </Typography>
       </div>
-      <Typography className={"m-2"}>
+      <Typography component={"span"} className={"m-2"}>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
         malesuada lacus ex, sit amet blandit leo lobortis eget.
       </Typography>
@@ -60,18 +55,20 @@ export default function Score({ score }) {
           aria-controls="panel1a-content"
           id="panel1a-header"
         >
-          <Typography>Air Quality Index for all pollutants</Typography>
+          <Typography component={"span"}>
+            Air Quality Index for all pollutants
+          </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <List>
             {score.map((item) => (
-                <ListItem>
+              <ListItem key={item.pollutant}>
                 <ListItemIcon>
                   <Avatar
                     sx={{
-                        bgcolor: daqiColourMap[item.poll_index].colour,
-                        width: 48,
-                        height: 48,
+                      bgcolor: daqiColourMap[item.poll_index].colour,
+                      width: 48,
+                      height: 48,
                     }}
                   >
                     {item.poll_index}
@@ -80,26 +77,23 @@ export default function Score({ score }) {
                 <ListItemText
                   primary={item.pollutant.toUpperCase()}
                   secondary={
-                      <div>
-                      <div>
-                        Time:
-                        {" " +
-                          new Date(item.date).toLocaleString("en-GB", {
-                              timeStyle: "short",
-                              dateStyle: "medium",
-                            })}
-                      </div>
-                      <div>
-                        Site:
-                        {" " + item.site}
-                      </div>
-                    </div>
+                    <>
+                      Time:
+                      {" " +
+                        new Date(item.date).toLocaleString("en-GB", {
+                          timeStyle: "short",
+                          dateStyle: "medium",
+                        })}
+                      <br />
+                      Site:
+                      {" " + item.site}
+                    </>
                   }
                 />
               </ListItem>
             ))}
           </List>
-          <Typography>
+          <Typography component={"span"}>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
             malesuada lacus ex, sit amet blandit leo lobortis eget.
           </Typography>
