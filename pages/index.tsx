@@ -13,10 +13,32 @@ import useSWR from "swr";
 import Title from "../components/Title";
 import Score from "../components/Score";
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
+
+let date = new Date();
+date.setDate(date.getDate() - 1);
+let yesterday = date.toLocaleDateString("en-GB", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
 const MapPlaceholder = (
-  <ContentLoader width="100%" height="600">
-    <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
-  </ContentLoader>
+  <>
+    <Paper
+      sx={{
+        p: 2,
+        display: "flex",
+        flexDirection: "column",
+        height: 600,
+      }}
+    >
+      <Title>{"Map of pollutant data for " + yesterday}</Title>
+      <ContentLoader width="100%" height="600">
+        <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
+      </ContentLoader>
+    </Paper>
+  </>
 );
 
 const ChartPlaceholder = (
@@ -38,21 +60,21 @@ const ChartPlaceholder = (
 
 const ScorePlaceholder = (
   <Paper
-      sx={{
-        p: 2,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: { md: 600, sm: 350 },
-      }}
-    >
-      <Title>Score</Title>
-  <ContentLoader width="100%" height="100%">
-    <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
-  </ContentLoader>
+    sx={{
+      p: 2,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      height: { md: 600, sm: 350 },
+    }}
+  >
+    <Title>Latest Air Quality Index</Title>
+    <ContentLoader width="100%" height="100%">
+      <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
+    </ContentLoader>
   </Paper>
-)
+);
 
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => MapPlaceholder,
@@ -150,8 +172,9 @@ const Home: NextPage = () => {
   if (daqiDataLoading) {
     ScoreComponent = ScorePlaceholder;
   } else if (daqiData) {
-    ScoreComponent = <Score score={daqiData[0]}/>
+    ScoreComponent = <Score score={daqiData[0]} />;
   }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -160,7 +183,7 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <Container fixed sx={{ minWidth: "250px" }} maxWidth="xl">
+        <Container maxWidth="xl" sx={{ minWidth: "250px" }}>
           <Grid
             container
             spacing={2}
@@ -168,10 +191,10 @@ const Home: NextPage = () => {
             // spacing={{ xs: 2, md: 3 }}
             // columns={{ xs: 1, sm: 2 }}
           >
-            <Grid item xs={12} md={3} >
+            <Grid item xs={12} md={3}>
               {ScoreComponent}
             </Grid>
-            {/* <Title>Map of pollutant data</Title> */}
+
             <Grid item xs={12} md={9}>
               {MapComponent}
             </Grid>

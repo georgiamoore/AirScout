@@ -1,4 +1,5 @@
-import { green, yellow, orange, red } from "@mui/material/colors";
+import { green, yellow, orange, red, purple } from "@mui/material/colors";
+// import { purple } from "tailwindcss/colors";
 export const pollutantValueRanges = {
   // testing - PM10 ranges taken from https://www.epa.vic.gov.au/for-community/environmental-information/air-quality/pm10-particles-in-the-air
   pm10: [
@@ -37,6 +38,7 @@ export const pollutantValueRanges = {
     { range: [600, Infinity], colour: red[800] },
   ],
 };
+
 export const pollutantUnits = {
   // TODO check these units
   pm10: "µg/m³",
@@ -44,4 +46,17 @@ export const pollutantUnits = {
   o3: "µg/m³",
   no2: "µg/m³",
   so2: "µg/m³",
+};
+
+export const daqiColourMap = {
+  1: { meaning: "Low", colour: green[300] },
+  2: { meaning: "Low", colour: green[500]},
+  3: { meaning: "Low", colour: green[800]},
+  4: { meaning: "Moderate", colour: yellow["A200"]},
+  5: { meaning: "Moderate", colour: yellow[700]},
+  6: { meaning: "Moderate", colour: yellow[900]},
+  7: { meaning: "High", colour: red[300]},
+  8: { meaning: "High", colour: red[900]},
+  9: { meaning: "High", colour: red["A700"]},
+  10: { meaning: "Very High", colour: purple["A700"]},
 };

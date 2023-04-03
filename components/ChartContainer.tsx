@@ -12,7 +12,7 @@ export default function ChartContainer({ chart }) {
     weekly: "weekly",
     daily: "daily",
   };
-  const [visibleChart, setVisibleChart] = useState(CONTAINER_STATE.monthly);
+  const [visibleChart, setVisibleChart] = useState(CONTAINER_STATE.annual);
 
   return (
     <Grid item xs={2} sm={2} md={4}>

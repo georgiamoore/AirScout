@@ -11,9 +11,10 @@
     "cypress": "cypress open"
   },
   "dependencies": {
-    "@emotion/react": "^11.10.5",
-    "@emotion/styled": "^11.10.5",
-    "@mui/material": "^5.11.9",
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@mui/icons-material": "^5.11.11",
+    "@mui/material": "^5.11.15",
     "@prisma/client": "^4.4.0",
     "@turf/turf": "^6.5.0",
     "@turf/voronoi": "^6.5.0",

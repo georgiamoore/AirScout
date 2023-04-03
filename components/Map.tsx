@@ -259,7 +259,16 @@ const Map = ({ combinedData }: MapProps) => {
       </p>
     ));
   };
+  let date = new Date();
+  date.setDate(date.getDate() - 1);
+  let yesterday = date.toLocaleDateString("en-GB", {
 
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+
+  });
   return (
     <>
       <Paper
@@ -269,7 +278,8 @@ const Map = ({ combinedData }: MapProps) => {
           flexDirection: "column",
           height: 600,
         }}
-      >
+        >
+        <Title>{"Map of pollutant data for " + yesterday}</Title>
         <div ref={mapContainer} className="map-container">
           <nav id="menu" />
         </div>
