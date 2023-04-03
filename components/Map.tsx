@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import Title from "./Title";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -6,7 +6,9 @@ import * as turf from "@turf/turf";
 import { FeatureCollection } from "@turf/turf";
 import Paper from "@mui/material/Paper";
 import RainLayer from "mapbox-gl-rain-layer";
-import { pollutantValueRanges } from "../utils";
+import { getPollutantValueMeaning, pollutantValueRanges } from "../utils";
+import Typography from "@mui/material/Typography";
+import * as ReactDOMClient from "react-dom/client";
 
 type MapProps = {
   combinedData: {
@@ -61,20 +63,14 @@ const Map = ({ combinedData }: MapProps) => {
 
       // removing properties where value is null (to prevent black spots on map where no pollutant data is available)
       combinedData = combinedData.filter((x) =>
-        x.data.features
-          .map((feature) => {
-            Object.keys(feature.properties).forEach((key) => {
-              if (isNaN(feature.properties[key])) {
-                delete feature.properties[key];
-              }
-            });
-            return feature;
-          })
-          .filter((feature) => {
-            return Object.values(feature.properties).every((value) => {
-              return value !== null;
-            });
-          })
+        x.data.features.map((feature) => {
+          Object.keys(feature.properties).forEach((key) => {
+            if (feature.properties[key] === "NaN") {
+              delete feature.properties[key];
+            }
+          });
+          return feature;
+        })
       );
 
       let reducedCollection = turf.featureCollection([
@@ -155,7 +151,7 @@ const Map = ({ combinedData }: MapProps) => {
             },
           });
         } else {
-          pollutants.map((pollutant) =>
+          pollutants.map((pollutant) => {
             map.current.addLayer({
               id: pollutant + featureCollection.source,
               type: "circle",
@@ -170,8 +166,64 @@ const Map = ({ combinedData }: MapProps) => {
               layout: {
                 visibility: pollutant === "pm2.5" ? "visible" : "none",
               },
-            })
-          );
+            });
+            let popup: mapboxgl.Popup;
+            map.current.on(
+              "mouseenter",
+              pollutant + featureCollection.source,
+              (e: {
+                features: { properties: any }[];
+                lngLat: { lng: number };
+              }) => {
+                map.current.getCanvas().style.cursor = "pointer";
+
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const properties = e.features[0].properties;
+                const station = properties.station_name;
+                const timestamp = new Date(properties.timestamp);
+                const meaning = getPollutantValueMeaning(
+                  pollutant,
+                  properties[pollutant]
+                );
+
+                const tooltip = (
+                  <>
+                    <Typography variant="h6">{station}</Typography>
+                    <Typography variant="body1">
+                      {"Average " +
+                        pollutant.toUpperCase() +
+                        " for " +
+                        timestamp.toLocaleDateString("en-GB") +
+                        ": " +
+                        properties[pollutant] +
+                        " µg/m³ (" +
+                        meaning +
+                        ")"}
+                    </Typography>
+                  </>
+                );
+
+                // https://docs.mapbox.com/mapbox-gl-js/example/popup-on-hover/
+                // "Ensure that if the map is zoomed out such that multiple
+                // copies of the feature are visible, the popup appears
+                // over the copy being pointed to."
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                  coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+
+                popup = addPopup(tooltip, coordinates, map.current);
+              }
+            );
+
+            map.current.on(
+              "mouseleave",
+              pollutant + featureCollection.source,
+              () => {
+                map.current.getCanvas().style.cursor = "";
+                popup.remove();
+              }
+            );
+          });
         }
       });
     });
@@ -193,20 +245,20 @@ const Map = ({ combinedData }: MapProps) => {
           e.stopPropagation();
           const layerIDs = map.current
             .getStyle()
-            .layers.map((layer) => layer.id)
-            .filter((layerID) =>
+            .layers.map((layer: { id: any }) => layer.id)
+            .filter((layerID: string | string[]) =>
               pollutants.some(
                 (pollutant) =>
                   layerID.includes(pollutant) || layerID.includes("voronoi")
               )
             );
           const matchingLayers = layerIDs.filter(
-            (layerID) =>
+            (layerID: string) =>
               layerID.startsWith(this.id) ||
               (layerID.includes("voronoi") && layerID.includes(this.id))
           );
 
-          matchingLayers.forEach((layerID) => {
+          matchingLayers.forEach((layerID: any) => {
             const visibility = map.current.getLayoutProperty(
               layerID,
               "visibility"
@@ -262,12 +314,10 @@ const Map = ({ combinedData }: MapProps) => {
   let date = new Date();
   date.setDate(date.getDate() - 1);
   let yesterday = date.toLocaleDateString("en-GB", {
-
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
-
   });
   return (
     <>
@@ -278,11 +328,12 @@ const Map = ({ combinedData }: MapProps) => {
           flexDirection: "column",
           height: 600,
         }}
-        >
+      >
         <Title>{"Map of pollutant data for " + yesterday}</Title>
         <div ref={mapContainer} className="map-container">
           <nav id="menu" />
         </div>
+        <p>TODO POLLUTANT COLOUR CODES</p>
       </Paper>
       {/* <p>loaded {locations ? locations.length : ""} data sources</p>
       {getNumDataPoints()} */}
@@ -328,6 +379,22 @@ const collectWithFilter = (collection, propertyName) => {
     propertyName,
     "values"
   );
+};
+
+// utility function taken from https://stackoverflow.com/questions/48916901/possible-to-render-react-component-within-mapboxgl-popup-in-sethtml-or-setdo
+const addPopup = (
+  element: JSX.Element,
+  coordinates: mapboxgl.LngLatLike,
+  map: MutableRefObject<any>
+) => {
+  const placeholder = document.createElement("div");
+  const root = ReactDOMClient.createRoot(placeholder);
+  root.render(element);
+
+  return new mapboxgl.Popup({ closeButton: false, closeOnClick: false })
+    .setDOMContent(placeholder)
+    .setLngLat(coordinates)
+    .addTo(map);
 };
 
 export default Map;
