@@ -72,10 +72,10 @@ const Map = ({ combinedData }: MapProps) => {
     rainColor: "#0703fc",
   });
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
-  const interpolationsMap: string[] = [];
+  const colourInterpolationsMap: string[] = [];
   // creates linear interpolation values for each pollutant (used in mapbox layer styling)
   pollutants.map((pollutant) => {
-    interpolationsMap[pollutant] = generateColourInterpolationValues(
+    colourInterpolationsMap[pollutant] = generateColourInterpolationValues(
       pollutant,
       pollutantValueRanges[pollutant]
     );
@@ -105,7 +105,7 @@ const Map = ({ combinedData }: MapProps) => {
         })
       );
 
-      // combining all feature collections into one, to be used for voronoi layer
+      // combining all feature collections into one, to be used for interpolation layer
       let reducedCollection = turf.featureCollection([
         ...combinedData
           .filter((source) => source.data.features)
@@ -113,18 +113,18 @@ const Map = ({ combinedData }: MapProps) => {
           .reduce((prev, current) => [...prev, ...current], []), // the [] here is used if no features are found (i.e. no API update)
       ]);
 
-      // creating voronoi polygons for each pollutant
-      const voronoiCollection = pollutants.map((pollutant) => {
+      // creating interpolation polygons for each pollutant
+      const interpolationCollection = pollutants.map((pollutant) => {
         return {
-          source: pollutant + "-voronoi",
+          source: pollutant + "-interpolation",
           data: collectWithFilter(reducedCollection, pollutant),
         };
       });
-      setLocations([...combinedData, ...voronoiCollection]);
+      setLocations([...combinedData, ...interpolationCollection]);
     }
   }, [combinedData, locations.length]);
 
-  // function to create voronoi polygons from a collection of points
+  // function to create interpolation polygons from a collection of points
   const collectWithFilter = (collection, propertyName) => {
     const filteredFeatures = turf.featureCollection(
       collection.features.filter(
@@ -135,23 +135,25 @@ const Map = ({ combinedData }: MapProps) => {
           f.properties[propertyName] !== "NaN"
       )
     );
-    const bbox = turf.bbox(filteredFeatures);
-    const voronoiPolygons = turf.voronoi(filteredFeatures, { bbox });
 
-    let filteredVoronoiFeatures = turf.featureCollection([]);
-    for (let i = 0; i < voronoiPolygons.features.length; i++) {
-      if (voronoiPolygons.features[i] != null) {
+    // generates a grid of hexagons (1 hex = 2 miles), interpolating pollutant values
+    const options = {gridType: 'hex', property: [propertyName], units: 'miles'};
+    const interpolationPolygons = turf.interpolate(filteredFeatures, 2, options);
+
+    let filteredInterpolationFeatures = turf.featureCollection([]);
+    for (let i = 0; i < interpolationPolygons.features.length; i++) {
+      if (interpolationPolygons.features[i] != null) {
         let featurePush = {
           type: "Feature",
-          properties: filteredFeatures.features[i].properties,
-          geometry: voronoiPolygons.features[i].geometry,
+          properties: interpolationPolygons.features[i].properties,
+          geometry: interpolationPolygons.features[i].geometry,
         };
-        filteredVoronoiFeatures.features.push(featurePush);
+        filteredInterpolationFeatures.features.push(featurePush);
       }
     }
 
     return turf.collect(
-      filteredVoronoiFeatures,
+      filteredInterpolationFeatures,
       filteredFeatures,
       propertyName,
       "values"
@@ -184,8 +186,8 @@ const Map = ({ combinedData }: MapProps) => {
             .getSource(featureCollection.source)
             .setData(featureCollection.data);
         }
-        if (featureCollection.source.includes("voronoi")) {
-          addVoronoiLayers(map, featureCollection.source);
+        if (featureCollection.source.includes("interpolation")) {
+          addInterpolationLayers(map, featureCollection.source);
         } else {
           // adding regular layer with circle markers for each station/sensor
           pollutants.map((pollutant) => {
@@ -195,7 +197,7 @@ const Map = ({ combinedData }: MapProps) => {
               source: featureCollection.source,
               filter: ["has", pollutant],
               paint: {
-                "circle-color": interpolationsMap[pollutant],
+                "circle-color": colourInterpolationsMap[pollutant],
                 "circle-radius": 6,
                 "circle-stroke-width": 2,
                 "circle-stroke-color": "#ffffff",
@@ -236,35 +238,35 @@ const Map = ({ combinedData }: MapProps) => {
     // });
   };
 
-  // adds the voronoi layers
-  const addVoronoiLayers = (map: MutableRefObject<any>, source) => {
+  // adds the interpolation layers
+  const addInterpolationLayers = (map: MutableRefObject<any>, source) => {
     const pollutant = source.split("-")[0];
 
-    const interpolations = interpolationsMap[pollutant] || {};
+    const colourInterpolations = colourInterpolationsMap[pollutant] || {};
 
     map.current.addLayer({
-      id: "voronoi-" + pollutant,
+      id: "interpolation-" + pollutant,
       type: "fill",
       source,
       layout: {
         visibility: pollutant === "pm2.5" ? "visible" : "none",
       },
       paint: {
-        "fill-color": interpolations,
+        "fill-color": colourInterpolations,
         "fill-opacity": 0.2,
-        "fill-outline-color": interpolations,
+        "fill-outline-color": colourInterpolations,
       },
     });
     map.current.addLayer({
-      id: "voronoi-line-" + pollutant,
+      id: "interpolation-line-" + pollutant,
       type: "line",
       source,
       layout: {
         visibility: pollutant === "pm2.5" ? "visible" : "none",
       },
       paint: {
-        "line-width": 2,
-        "line-color": interpolations,
+        "line-width": 1,
+        "line-color": colourInterpolations,
       },
     });
   };
@@ -366,15 +368,15 @@ const Map = ({ combinedData }: MapProps) => {
           .filter((layerID: string | string[]) =>
             pollutants.some(
               (pollutant) =>
-                layerID.includes(pollutant) || layerID.includes("voronoi")
+                layerID.includes(pollutant) || layerID.includes("interpolation")
             )
           );
 
-        // getting layers that match the pollutant selected (including voronoi)
+        // getting layers that match the pollutant selected (including interpolation)
         const matchingLayers = layerIDs.filter(
           (layerID: string) =>
             layerID.startsWith(this.id) ||
-            (layerID.includes("voronoi") && layerID.includes(this.id))
+            (layerID.includes("interpolation") && layerID.includes(this.id))
         );
 
         matchingLayers.forEach((layerID: any) => {
