@@ -6,7 +6,11 @@ import * as turf from "@turf/turf";
 import { FeatureCollection } from "@turf/turf";
 import Paper from "@mui/material/Paper";
 import RainLayer from "mapbox-gl-rain-layer";
-import { getPollutantValueMeaning, pollutantValueRanges } from "../utils";
+import {
+  getPollutantValueMeaning,
+  pollutantUnits,
+  pollutantValueRanges,
+} from "../utils";
 import Typography from "@mui/material/Typography";
 import * as ReactDOMClient from "react-dom/client";
 
@@ -27,7 +31,31 @@ const createInterpolationsMap = (pollutantName, valueRanges) => {
   return interpolations;
 };
 
+const PollutantInfo = ({ pollutant }) => (
+  <div id="pollutant-info">
+    <Typography>
+      {pollutant.toUpperCase()} ranges ({pollutantUnits[pollutant]})
+    </Typography>
+
+    <table className="w-full table-auto text-sm text-left">
+      <tbody className="divide-y">
+        {pollutantValueRanges[pollutant].map(
+          ({ range: [start, end], meaning, colour }, idx) => (
+            <tr key={idx} style={{ color: colour }}>
+              <td>{meaning}</td>
+              <td>
+                {start}
+                {end !== Infinity ? " - " + end : "+"}
+              </td>
+            </tr>
+          )
+        )}
+      </tbody>
+    </table>
+  </div>
+);
 const Map = ({ combinedData }: MapProps) => {
+  const [activePollutant, setActivePollutant] = useState("pm2.5");
   const [lng, setLng] = useState(-1.890401);
   const [lat, setLat] = useState(52.486243);
   const [zoom, setZoom] = useState(14);
@@ -188,8 +216,10 @@ const Map = ({ combinedData }: MapProps) => {
 
                 const tooltip = (
                   <>
-                  {/* TODO check below ternary works as expected */}
-                    <Typography variant="h6">{station !== undefined ? station : "Aston sensor"}</Typography>
+                    {/* TODO check below ternary works as expected */}
+                    <Typography variant="h6">
+                      {station !== undefined ? station : "Aston sensor"}
+                    </Typography>
                     <Typography variant="body1">
                       {"Average " +
                         pollutant.toUpperCase() +
@@ -244,6 +274,7 @@ const Map = ({ combinedData }: MapProps) => {
         link.onclick = function (e) {
           e.preventDefault();
           e.stopPropagation();
+          setActivePollutant(id);
           const layerIDs = map.current
             .getStyle()
             .layers.map((layer: { id: any }) => layer.id)
@@ -320,6 +351,7 @@ const Map = ({ combinedData }: MapProps) => {
     month: "long",
     day: "numeric",
   });
+
   return (
     <>
       <Paper
@@ -333,8 +365,8 @@ const Map = ({ combinedData }: MapProps) => {
         <Title>{"Map of pollutant data for " + yesterday}</Title>
         <div ref={mapContainer} className="map-container">
           <nav id="menu" />
+          <PollutantInfo pollutant={activePollutant} />
         </div>
-        <p>TODO POLLUTANT COLOUR CODES</p>
       </Paper>
       {/* <p>loaded {locations ? locations.length : ""} data sources</p>
       {getNumDataPoints()} */}

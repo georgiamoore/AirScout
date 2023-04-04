@@ -35,8 +35,23 @@ a {
   font-family: 'Open Sans', sans-serif;
 }
 
+#pollutant-info {
+  background: #fff;
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  right: 50px;
+  border-radius: 3px;
+  width: 185px;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  font-family: 'Open Sans', sans-serif;
+  font-size: 13px;
+  padding: 10px;
+  text-align: center;
+}
+
 #menu a {
-    
   font-size: 13px;
   color: #404040;
   display: block;
