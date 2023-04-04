@@ -42,7 +42,7 @@ export default function Score({ score }) {
           {highest.poll_index}
         </Avatar>
         <Typography component={"span"} className={`ms-2 text-xl `}>
-          {daqiColourMap[highest.poll_index].meaning}
+          {daqiColourMap[highest.poll_index].risk}
         </Typography>
       </div>
       <Typography component={"span"} className={"m-2"}>

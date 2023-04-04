@@ -3,11 +3,11 @@ import mapboxgl from "mapbox-gl";
 import Title from "./Title";
 import "mapbox-gl/dist/mapbox-gl.css";
 import * as turf from "@turf/turf";
-import { FeatureCollection } from "@turf/turf";
+import { feature, FeatureCollection } from "@turf/turf";
 import Paper from "@mui/material/Paper";
 import RainLayer from "mapbox-gl-rain-layer";
 import {
-  getPollutantValueMeaning,
+  getPollutantValueRisk,
   pollutantUnits,
   pollutantValueRanges,
 } from "../utils";
@@ -32,6 +32,7 @@ const generateColourInterpolationValues = (pollutantName, valueRanges) => {
   return interpolations;
 };
 
+// creates legend showing pollutant ranges & corresponding colours/risk
 const PollutantInfo = ({ pollutant }) => (
   <div id="pollutant-info">
     <Typography>
@@ -41,10 +42,10 @@ const PollutantInfo = ({ pollutant }) => (
     <table className="w-full table-auto text-sm text-left">
       <tbody className="divide-y">
         {pollutantValueRanges[pollutant].map(
-          ({ range: [start, end], meaning, colour }, idx) => (
+          ({ range: [start, end], risk, colour }, idx) => (
             <tr key={idx} style={{ color: colour }}>
-              <td>{meaning}</td>
-              <td>
+              <td>{risk}</td>
+              <td className="text-right">
                 {start}
                 {end !== Infinity ? " - " + end : "+"}
               </td>
@@ -94,8 +95,10 @@ const Map = ({ combinedData }: MapProps) => {
       combinedData = combinedData.filter((source) =>
         source.data.features.map((feature) => {
           Object.keys(feature.properties!).forEach((key) => {
-            if (feature.properties![key] === "NaN") {
+            if (feature.properties![key] === "NaN" || feature.properties![key] === 0) {
               delete feature.properties![key];
+            } else if (!isNaN(feature.properties![key])) {
+              feature.properties![key] = parseFloat(parseFloat(feature.properties![key]).toFixed(2)) //toFixed returns a string, another parseFloat needed to convert it back 
             }
           });
           return feature;
@@ -266,7 +269,7 @@ const Map = ({ combinedData }: MapProps) => {
     });
   };
 
-  // adds a popup that appears on hover, with station name, pollutant value, timestamp & meaning/risk category
+  // adds a popup that appears on hover, with station name, pollutant value, timestamp & risk category
   const addStationInfoPopup = (
     map: MutableRefObject<any>,
     pollutant,
@@ -283,7 +286,7 @@ const Map = ({ combinedData }: MapProps) => {
         const properties = e.features[0].properties;
         const station = properties.station_name;
         const timestamp = new Date(properties.timestamp);
-        const meaning = getPollutantValueMeaning(
+        const risk = getPollutantValueRisk(
           pollutant,
           properties[pollutant]
         );
@@ -302,7 +305,7 @@ const Map = ({ combinedData }: MapProps) => {
                 ": " +
                 properties[pollutant] +
                 " µg/m³ (" +
-                meaning +
+                risk +
                 ")"}
             </Typography>
           </>
