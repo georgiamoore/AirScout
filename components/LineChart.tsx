@@ -15,8 +15,11 @@ export default function LineChart({ data, titlePrefix }) {
 
   if (!data[0]) {
     return <Title>No data for this time period. ({titlePrefix})</Title>;
-  }
+  } 
   const chartSubject = Object.keys(data[0])[1];
+  if (data[0][chartSubject] == undefined){
+    return <Title>No data for this time period. ({titlePrefix})</Title>;
+  }
 
   const getSegmentColour = (ctx, pollutant) => {
     const pollutantRange = pollutantValueRanges[pollutant];
