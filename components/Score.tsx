@@ -15,8 +15,8 @@ import Title from "./Title";
 import { daqiColourMap } from "../utils";
 
 export default function Score({ score }) {
-  let highest = score.reduce((max, item) =>
-    item.poll_index > max.poll_index ? item : max
+  let highest = Object.values(score).reduce((highest, pollutant) =>
+    highest.daqi > pollutant.daqi ? highest : pollutant
   );
   return (
     <Paper
@@ -34,15 +34,15 @@ export default function Score({ score }) {
       <div className={"flex items-center m-2"}>
         <Avatar
           sx={{
-            bgcolor: daqiColourMap[highest.poll_index].colour,
+            bgcolor: daqiColourMap[highest.daqi].colour,
             width: 56,
             height: 56,
           }}
         >
-          {highest.poll_index}
+          {highest.daqi}
         </Avatar>
         <Typography component={"span"} className={`ms-2 text-xl `}>
-          {daqiColourMap[highest.poll_index].risk}
+          {daqiColourMap[highest.daqi].risk}
         </Typography>
       </div>
       <Typography component={"span"} className={"m-2"}>
@@ -61,32 +61,28 @@ export default function Score({ score }) {
         </AccordionSummary>
         <AccordionDetails>
           <List>
-            {score.map((item) => (
-              <ListItem key={item.pollutant}>
+            {Object.entries(score).map(([key, value]) => (
+              <ListItem key={key}>
                 <ListItemIcon>
                   <Avatar
                     sx={{
-                      bgcolor: daqiColourMap[item.poll_index].colour,
+                      bgcolor: daqiColourMap[value.daqi].colour,
                       width: 48,
                       height: 48,
                     }}
                   >
-                    {item.poll_index}
+                    {value.daqi}
                   </Avatar>
                 </ListItemIcon>
                 <ListItemText
-                  primary={item.pollutant.toUpperCase()}
+                  primary={key.toUpperCase()}
                   secondary={
                     <>
-                      Time:
-                      {" " +
-                        new Date(item.date).toLocaleString("en-GB", {
-                          timeStyle: "short",
-                          dateStyle: "medium",
-                        })}
-                      <br />
                       Site:
-                      {" " + item.site}
+                      {" " + value.station_name}
+                      <br />
+                      Measurement period:
+                      {" " + value.measurement_period}
                     </>
                   }
                 />
@@ -96,6 +92,9 @@ export default function Score({ score }) {
           <Typography component={"span"}>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
             malesuada lacus ex, sit amet blandit leo lobortis eget.
+          </Typography>
+          <Typography component={"span"}>
+            TODO needs full scale for reference
           </Typography>
         </AccordionDetails>
       </Accordion>
