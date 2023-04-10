@@ -92,9 +92,9 @@ const Map = ({ combinedData }: MapProps) => {
 
   useEffect(() => {
     if (locations.length == 0) {
-      // removing properties where value is null (to prevent black spots on map where no pollutant data is available)
+        // removing properties where value is null (to prevent black spots on map where no pollutant data is available)
       combinedData = combinedData.filter((source) =>
-        source.data.features.map((feature) => {
+      source.data.features ? source.data.features.map((feature) => {
           Object.keys(feature.properties!).forEach((key) => {
             if (
               feature.properties![key] === "NaN" ||
@@ -108,7 +108,7 @@ const Map = ({ combinedData }: MapProps) => {
             }
           });
           return feature;
-        })
+        }) : {}
       );
 
       // combining all feature collections into one, to be used for interpolation layer
@@ -205,6 +205,7 @@ const Map = ({ combinedData }: MapProps) => {
         } else {
           // adding regular layer with circle markers for each station/sensor
           pollutants.map((pollutant) => {
+            if (featureCollection.data.features !== null)
             if (
               featureCollection.data.features.some(
                 (obj) =>
@@ -220,7 +221,7 @@ const Map = ({ combinedData }: MapProps) => {
                 filter: ["has", pollutant],
                 paint: {
                   "circle-color": colourInterpolationsMap[pollutant],
-                  "circle-radius": 6,
+                  "circle-radius": 8,
                   "circle-stroke-width": 2,
                   "circle-stroke-color": "#ffffff",
                 },
