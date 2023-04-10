@@ -72,6 +72,7 @@ const Map = ({ combinedData }: MapProps) => {
     rainColor: "#0703fc",
   });
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
+  let addedPollutantLayers = [];
   const colourInterpolationsMap: string[] = [];
   // creates linear interpolation values for each pollutant (used in mapbox layer styling)
   pollutants.map((pollutant) => {
@@ -95,10 +96,15 @@ const Map = ({ combinedData }: MapProps) => {
       combinedData = combinedData.filter((source) =>
         source.data.features.map((feature) => {
           Object.keys(feature.properties!).forEach((key) => {
-            if (feature.properties![key] === "NaN" || feature.properties![key] === 0) {
+            if (
+              feature.properties![key] === "NaN" ||
+              feature.properties![key] === 0
+            ) {
               delete feature.properties![key];
             } else if (!isNaN(feature.properties![key])) {
-              feature.properties![key] = parseFloat(parseFloat(feature.properties![key]).toFixed(2)) //toFixed returns a string, another parseFloat needed to convert it back 
+              feature.properties![key] = parseFloat(
+                parseFloat(feature.properties![key]).toFixed(2)
+              ); //toFixed returns a string, another parseFloat needed to convert it back
             }
           });
           return feature;
@@ -137,8 +143,16 @@ const Map = ({ combinedData }: MapProps) => {
     );
 
     // generates a grid of hexagons (1 hex = 2 miles), interpolating pollutant values
-    const options = {gridType: 'hex', property: [propertyName], units: 'miles'};
-    const interpolationPolygons = turf.interpolate(filteredFeatures, 2, options);
+    const options = {
+      gridType: "hex",
+      property: [propertyName],
+      units: "miles",
+    };
+    const interpolationPolygons = turf.interpolate(
+      filteredFeatures,
+      2,
+      options
+    );
 
     let filteredInterpolationFeatures = turf.featureCollection([]);
     for (let i = 0; i < interpolationPolygons.features.length; i++) {
@@ -172,7 +186,7 @@ const Map = ({ combinedData }: MapProps) => {
     });
 
     map.current.on("load", () => {
-      addContextualLayers(map);
+      // addContextualLayers(map);
       locations.map((featureCollection) => {
         if (!map.current.getSource(featureCollection.source)) {
           // add new source & feature data to map
@@ -191,22 +205,32 @@ const Map = ({ combinedData }: MapProps) => {
         } else {
           // adding regular layer with circle markers for each station/sensor
           pollutants.map((pollutant) => {
-            map.current.addLayer({
-              id: pollutant + featureCollection.source,
-              type: "circle",
-              source: featureCollection.source,
-              filter: ["has", pollutant],
-              paint: {
-                "circle-color": colourInterpolationsMap[pollutant],
-                "circle-radius": 6,
-                "circle-stroke-width": 2,
-                "circle-stroke-color": "#ffffff",
-              },
-              layout: {
-                visibility: pollutant === "pm2.5" ? "visible" : "none",
-              },
-            });
-            addStationInfoPopup(map, pollutant, featureCollection.source);
+            if (
+              featureCollection.data.features.some(
+                (obj) =>
+                  obj.properties &&
+                  obj.properties[pollutant] != null &&
+                  !isNaN(obj.properties[pollutant])
+              )
+            ) {
+              map.current.addLayer({
+                id: pollutant + featureCollection.source,
+                type: "circle",
+                source: featureCollection.source,
+                filter: ["has", pollutant],
+                paint: {
+                  "circle-color": colourInterpolationsMap[pollutant],
+                  "circle-radius": 6,
+                  "circle-stroke-width": 2,
+                  "circle-stroke-color": "#ffffff",
+                },
+                layout: {
+                  visibility: pollutant === "pm2.5" ? "visible" : "none",
+                },
+              });
+              addStationInfoPopup(map, pollutant, featureCollection.source);
+              addedPollutantLayers.push(pollutant);
+            }
           });
         }
       });
@@ -288,14 +312,10 @@ const Map = ({ combinedData }: MapProps) => {
         const properties = e.features[0].properties;
         const station = properties.station_name;
         const timestamp = new Date(properties.timestamp);
-        const risk = getPollutantValueRisk(
-          pollutant,
-          properties[pollutant]
-        );
+        const risk = getPollutantValueRisk(pollutant, properties[pollutant]);
 
         const stationInfoComponent = (
           <>
-            {/* TODO check below ternary works as expected */}
             <Typography variant="h6">
               {station !== undefined ? station : "Aston sensor"}
             </Typography>
@@ -345,7 +365,8 @@ const Map = ({ combinedData }: MapProps) => {
   // sets the active pollutant layer, and toggles the visibility of the other layers
   // adapted from this example https://docs.mapbox.com/mapbox-gl-js/example/toggle-layers/
   const createPollutantToggleMenu = () => {
-    for (const id of pollutants) {
+    for (const id of addedPollutantLayers) {
+      // using the addedPollutantLayers prevents menu options being created for empty layers
       if (document.getElementById(id)) {
         continue;
       }
@@ -366,7 +387,7 @@ const Map = ({ combinedData }: MapProps) => {
           .getStyle()
           .layers.map((layer: { id: any }) => layer.id)
           .filter((layerID: string | string[]) =>
-            pollutants.some(
+            addedPollutantLayers.some(
               (pollutant) =>
                 layerID.includes(pollutant) || layerID.includes("interpolation")
             )
@@ -399,7 +420,7 @@ const Map = ({ combinedData }: MapProps) => {
           if (!matchingLayers.includes(layerID)) {
             map.current.setLayoutProperty(layerID, "visibility", "none");
             const layerLink = document.getElementById(
-              pollutants.find((p) => layerID.includes(p))
+              addedPollutantLayers.find((p) => layerID.includes(p))
             );
             if (layerLink) {
               layerLink.className = "";
