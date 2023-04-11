@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
-import React from "react";
+import React, { useState } from "react";
 import ContentLoader from "react-content-loader";
 import Container from "@mui/material/Container";
 import ChartContainer from "../components/ChartContainer";
@@ -90,6 +90,15 @@ const Map = dynamic(() => import("../components/Map"), {
 });
 
 const Home: NextPage = () => {
+  const CHART_CONTAINER_STATE = {
+    annual: "annual",
+    monthly: "monthly",
+    weekly: "weekly",
+    daily: "daily",
+  };
+  const [visibleChart, setVisibleChart] = useState(
+    CHART_CONTAINER_STATE.annual
+  );
   const multipleFetcher = (urls: string[]) => {
     const f = (url: string) =>
       fetch(url)
@@ -159,6 +168,7 @@ const Home: NextPage = () => {
             <ChartContainer
               chart={filterChartDataByPollutant(pollutant)}
               key={pollutant + "container"}
+              visibleChart={visibleChart}
             />
           );
         })}
@@ -178,7 +188,10 @@ const Home: NextPage = () => {
       ScoreComponent = <Score score={daqiData[0]} />;
     }
   }
-
+  let inactiveButtonStyle =
+    "inline-block p-4 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-600";
+  let activeButtonStyle =
+    "inline-block p-4 border-b-2 border-indigo-700 text-indigo-700";
   return (
     <div className={styles.container}>
       <Head>
@@ -199,6 +212,58 @@ const Home: NextPage = () => {
           </Grid>
         </Container>
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+          <Title>Average pollutant values</Title>
+          {/* table styling adapted from https://flowbite.com/docs/components/tabs/#interactive-tabs */}
+          <ul className="w-full border-b flex items-center gap-x-3 overflow-x-auto">
+            <li>
+              <button
+                className={
+                  visibleChart === CHART_CONTAINER_STATE.annual
+                    ? activeButtonStyle
+                    : inactiveButtonStyle
+                }
+                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.annual)}
+              >
+                Annual
+              </button>
+            </li>
+            <li>
+              <button
+                className={
+                  visibleChart === CHART_CONTAINER_STATE.monthly
+                    ? activeButtonStyle
+                    : inactiveButtonStyle
+                }
+                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.monthly)}
+              >
+                Monthly
+              </button>
+            </li>
+            <li>
+              <button
+                className={
+                  visibleChart === CHART_CONTAINER_STATE.weekly
+                    ? activeButtonStyle
+                    : inactiveButtonStyle
+                }
+                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.weekly)}
+              >
+                Weekly
+              </button>
+            </li>
+            <li>
+              <button
+                className={
+                  visibleChart === CHART_CONTAINER_STATE.daily
+                    ? activeButtonStyle
+                    : inactiveButtonStyle
+                }
+                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.daily)}
+              >
+                Daily
+              </button>
+            </li>
+          </ul>
           <Grid
             container
             spacing={{ xs: 2, md: 3 }}
