@@ -36,13 +36,13 @@ export const pollutantValueRanges = {
 };
 
 export const getPollutantValueRisk = (pollutant, value) => {
-    for (const range of pollutantValueRanges[pollutant]) {
-      if (value >= range.range[0] && value < range.range[1]) {
-        return range.risk;
-      }
+  for (const range of pollutantValueRanges[pollutant]) {
+    if (value >= range.range[0] && value < range.range[1]) {
+      return range.risk;
     }
-    return null;
-  };
+  }
+  return null;
+};
 
 export const pollutantUnits = {
   // TODO check these units
@@ -55,13 +55,37 @@ export const pollutantUnits = {
 
 export const daqiColourMap = {
   1: { risk: "Low", colour: green[300] },
-  2: { risk: "Low", colour: green[600]},
-  3: { risk: "Low", colour: green[800]},
-  4: { risk: "Moderate", colour: yellow["A200"]},
-  5: { risk: "Moderate", colour: yellow[700]},
-  6: { risk: "Moderate", colour: yellow[900]},
-  7: { risk: "High", colour: red[300]},
-  8: { risk: "High", colour: red[900]},
-  9: { risk: "High", colour: red["A700"]},
-  10: { risk: "Very High", colour: purple["A700"]},
+  2: { risk: "Low", colour: green[600] },
+  3: { risk: "Low", colour: green[800] },
+  4: { risk: "Moderate", colour: yellow["A200"] },
+  5: { risk: "Moderate", colour: yellow[700] },
+  6: { risk: "Moderate", colour: yellow[900] },
+  7: { risk: "High", colour: red[300] },
+  8: { risk: "High", colour: red[900] },
+  9: { risk: "High", colour: red["A700"] },
+  10: { risk: "Very High", colour: purple["A700"] },
+};
+
+export const daqiHealthAdvice = {
+  Low: {
+    general: "Enjoy your usual outdoor activities.",
+    atRisk: "Enjoy your usual outdoor activities.",
+  },
+  Moderate: {
+    general: "Enjoy your usual outdoor activities.",
+    atRisk:
+      "Adults and children with lung problems, and adults with heart problems, who experience symptoms, should consider reducing strenuous physical activity, particularly outdoors.",
+  },
+  High: {
+    general:
+      "Anyone experiencing discomfort such as sore eyes, cough or sore throat should consider reducing activity, particularly outdoors.",
+    atRisk:
+      "Adults and children with lung problems, and adults with heart problems, should reduce strenuous physical exertion, particularly outdoors, and particularly if they experience symptoms. People with asthma may find they need to use their reliever inhaler more often. Older people should also reduce physical exertion.",
+  },
+  "Very High": {
+    general:
+      "Reduce physical exertion, particularly outdoors, especially if you experience symptoms such as cough or sore throat.",
+    atRisk:
+      "Adults and children with lung problems, adults with heart problems, and older people, should avoid strenuous physical activity. People with asthma may find they need to use their reliever inhaler more often.",
+  },
 };
