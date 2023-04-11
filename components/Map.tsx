@@ -380,7 +380,7 @@ const Map = ({ combinedData }: MapProps) => {
   ) => {
     let stationInfoPopup: mapboxgl.Popup;
     map.current.on(
-      "mouseenter",
+      "click",
       pollutant + source,
       (e: { features: { properties: any }[]; lngLat: { lng: number } }) => {
         map.current.getCanvas().style.cursor = "pointer";
@@ -447,6 +447,19 @@ const Map = ({ combinedData }: MapProps) => {
                   data={chartData}
                   options={{
                     plugins: {
+                      tooltip: {
+                        callbacks: {
+                          title: function (context) {
+                            let title = context[0].label || "";
+                            if (context[0].parsed.x !== null) {
+                              title = new Date(title)
+                                .toTimeString()
+                                .slice(0, 5);
+                            }
+                            return title;
+                          },
+                        },
+                      },
                       legend: {
                         display: false,
                       },
@@ -462,10 +475,10 @@ const Map = ({ combinedData }: MapProps) => {
                         ticks: {
                           callback: function (value, index, ticks) {
                             // changes axis labels to be in format HH:MM
-                              let timestamp = new Date(
-                                this.getLabelForValue(value)
-                              );
-                              let time = timestamp.toTimeString().slice(0, 5);
+                            let timestamp = new Date(
+                              this.getLabelForValue(value)
+                            );
+                            let time = timestamp.toTimeString().slice(0, 5);
                             return time === "00:00" // additionally adds weekday to 00:00 label
                               ? [
                                   time,
@@ -495,6 +508,19 @@ const Map = ({ combinedData }: MapProps) => {
                   data={chartData}
                   options={{
                     plugins: {
+                      tooltip: {
+                        callbacks: {
+                          title: function (context) {
+                            let title = context[0].label || "";
+                            if (context[0].parsed.x !== null) {
+                              title = new Date(title)
+                                .toTimeString()
+                                .slice(0, 5);
+                            }
+                            return title;
+                          },
+                        },
+                      },
                       legend: {
                         display: false,
                       },
@@ -510,10 +536,10 @@ const Map = ({ combinedData }: MapProps) => {
                         ticks: {
                           callback: function (value, index, ticks) {
                             // changes axis labels to be in format HH:MM
-                              let timestamp = new Date(
-                                this.getLabelForValue(value)
-                              );
-                              let time = timestamp.toTimeString().slice(0, 5);
+                            let timestamp = new Date(
+                              this.getLabelForValue(value)
+                            );
+                            let time = timestamp.toTimeString().slice(0, 5);
                             return time === "00:00" // additionally adds weekday to 00:00 label
                               ? [
                                   time,
@@ -550,20 +576,19 @@ const Map = ({ combinedData }: MapProps) => {
         const root = ReactDOMClient.createRoot(placeholder);
         root.render(stationInfoComponent);
 
-        stationInfoPopup = new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: false,
-        })
+        stationInfoPopup = new mapboxgl.Popup()
           .setDOMContent(placeholder)
           .setLngLat(coordinates)
           .setMaxWidth("400px")
           .addTo(map.current);
       }
     );
+    map.current.on("mouseenter", pollutant + source, () => {
+      map.current.getCanvas().style.cursor = "pointer";
+    });
 
     map.current.on("mouseleave", pollutant + source, () => {
       map.current.getCanvas().style.cursor = "";
-      stationInfoPopup.remove();
     });
   };
 
