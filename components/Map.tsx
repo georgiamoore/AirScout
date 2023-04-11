@@ -92,23 +92,25 @@ const Map = ({ combinedData }: MapProps) => {
 
   useEffect(() => {
     if (locations.length == 0) {
-        // removing properties where value is null (to prevent black spots on map where no pollutant data is available)
+      // removing properties where value is null (to prevent black spots on map where no pollutant data is available)
       combinedData = combinedData.filter((source) =>
-      source.data.features ? source.data.features.map((feature) => {
-          Object.keys(feature.properties!).forEach((key) => {
-            if (
-              feature.properties![key] === "NaN" ||
-              feature.properties![key] === 0
-            ) {
-              delete feature.properties![key];
-            } else if (!isNaN(feature.properties![key])) {
-              feature.properties![key] = parseFloat(
-                parseFloat(feature.properties![key]).toFixed(2)
-              ); //toFixed returns a string, another parseFloat needed to convert it back
-            }
-          });
-          return feature;
-        }) : {}
+        source.data.features
+          ? source.data.features.map((feature) => {
+              Object.keys(feature.properties!).forEach((key) => {
+                if (
+                  feature.properties![key] === "NaN" ||
+                  feature.properties![key] === 0
+                ) {
+                  delete feature.properties![key];
+                } else if (!isNaN(feature.properties![key])) {
+                  feature.properties![key] = parseFloat(
+                    parseFloat(feature.properties![key]).toFixed(2)
+                  ); //toFixed returns a string, another parseFloat needed to convert it back
+                }
+              });
+              return feature;
+            })
+          : {}
       );
 
       // combining all feature collections into one, to be used for interpolation layer
@@ -206,32 +208,32 @@ const Map = ({ combinedData }: MapProps) => {
           // adding regular layer with circle markers for each station/sensor
           pollutants.map((pollutant) => {
             if (featureCollection.data.features !== null)
-            if (
-              featureCollection.data.features.some(
-                (obj) =>
-                  obj.properties &&
-                  obj.properties[pollutant] != null &&
-                  !isNaN(obj.properties[pollutant])
-              )
-            ) {
-              map.current.addLayer({
-                id: pollutant + featureCollection.source,
-                type: "circle",
-                source: featureCollection.source,
-                filter: ["has", pollutant],
-                paint: {
-                  "circle-color": colourInterpolationsMap[pollutant],
-                  "circle-radius": 8,
-                  "circle-stroke-width": 2,
-                  "circle-stroke-color": "#ffffff",
-                },
-                layout: {
-                  visibility: pollutant === "pm2.5" ? "visible" : "none",
-                },
-              });
-              addStationInfoPopup(map, pollutant, featureCollection.source);
-              addedPollutantLayers.push(pollutant);
-            }
+              if (
+                featureCollection.data.features.some(
+                  (obj) =>
+                    obj.properties &&
+                    obj.properties[pollutant] != null &&
+                    !isNaN(obj.properties[pollutant])
+                )
+              ) {
+                map.current.addLayer({
+                  id: pollutant + featureCollection.source,
+                  type: "circle",
+                  source: featureCollection.source,
+                  filter: ["has", pollutant],
+                  paint: {
+                    "circle-color": colourInterpolationsMap[pollutant],
+                    "circle-radius": 8,
+                    "circle-stroke-width": 2,
+                    "circle-stroke-color": "#ffffff",
+                  },
+                  layout: {
+                    visibility: pollutant === "pm2.5" ? "visible" : "none",
+                  },
+                });
+                addStationInfoPopup(map, pollutant, featureCollection.source);
+                addedPollutantLayers.push(pollutant);
+              }
           });
         }
       });
@@ -454,7 +456,7 @@ const Map = ({ combinedData }: MapProps) => {
           height: 600,
         }}
       >
-        <Title>{"Map of pollutant data for " + yesterday}</Title>
+        <Title>{"Pollutant map for " + yesterday}</Title>
         <div ref={mapContainer} className="map-container">
           <nav id="menu" />
           <PollutantInfo pollutant={activePollutant} />

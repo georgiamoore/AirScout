@@ -10,11 +10,12 @@ import ChartContainer from "../components/ChartContainer";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import useSWR, { mutate } from "swr";
-import useSWRImmutable from "swr/immutable";
 import Title from "../components/Title";
 import Score from "../components/Score";
+
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
+
 let date = new Date();
 date.setDate(date.getDate() - 1);
 let yesterday = date.toLocaleDateString("en-GB", {
@@ -34,7 +35,7 @@ const MapPlaceholder = (
         height: 600,
       }}
     >
-      <Title>{"Map of pollutant data for " + yesterday}</Title>
+      <Title>{"Pollutant map for " + yesterday}</Title>
       <ContentLoader width="100%" height="600">
         <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
       </ContentLoader>
@@ -42,9 +43,14 @@ const MapPlaceholder = (
   </>
 );
 
-const ChartPlaceholder = 
-  pollutants.map((pollutant) => (
-  <Grid item xs={2} sm={4} md={4} key={pollutant+"-chart-placeholder-container"}>
+const ChartPlaceholder = pollutants.map((pollutant) => (
+  <Grid
+    item
+    xs={2}
+    sm={4}
+    md={4}
+    key={pollutant + "-chart-placeholder-container"}
+  >
     <Paper
       sx={{
         p: 2,
@@ -58,8 +64,7 @@ const ChartPlaceholder =
       </ContentLoader>
     </Paper>
   </Grid>
-  )
-);
+));
 
 const ScorePlaceholder = (
   <Paper
@@ -72,7 +77,7 @@ const ScorePlaceholder = (
       height: { md: 600, sm: 350 },
     }}
   >
-    <Title>Latest Air Quality Index</Title>
+    <Title>Highest Daily Air Quality Index</Title>
     <ContentLoader width="100%" height="100%">
       <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
     </ContentLoader>
@@ -81,10 +86,6 @@ const ScorePlaceholder = (
 
 const Map = dynamic(() => import("../components/Map"), {
   loading: () => MapPlaceholder,
-  ssr: false,
-});
-const Header = dynamic(() => import("../components/Header"), {
-  loading: () => <p>Loading...</p>,
   ssr: false,
 });
 
@@ -99,9 +100,7 @@ const Home: NextPage = () => {
 
   //TODO implement requests using this function rather than multiple useEffect hooks
   const useMultipleRequests = (urls) => {
-    // const urls = [apiURL + '/plume', apiURL + '/waqi', apiURL + '/waqi-archive', apiURL + '/aston',
-    //               apiURL + '/defra?pollutants=PM2.5', apiURL + '/defra_bmld', apiURL + '/defra_bold']
-    const { data, error } = useSWRImmutable(urls, multipleFetcher);
+    const { data, error } = useSWR(urls, multipleFetcher);
 
     return {
       data: data,
@@ -111,15 +110,11 @@ const Home: NextPage = () => {
     };
   };
 
+  // TODO these requests should have their own error messages (fed into placeholder if needed)
   const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
-    // apiURL + "/aston",
-    // apiURL + "/defra?pollutants=pm2.5",
+    apiURL + "/aston",
     apiURL + "/defra",
   ]);
-
-  // const chartUrls = pollutants.map(
-  //   (pollutant) => `${apiURL}/stats?pollutants=${pollutant}`
-  // );
 
   const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
     `${apiURL}/stats`,
@@ -165,7 +160,6 @@ const Home: NextPage = () => {
               chart={filterChartDataByPollutant(pollutant)}
               key={pollutant + "container"}
             />
-            // )
           );
         })}
       </>
@@ -194,13 +188,7 @@ const Home: NextPage = () => {
       </Head>
       <main className={styles.main}>
         <Container maxWidth="xl" sx={{ minWidth: "250px" }}>
-          <Grid
-            container
-            spacing={2}
-            // container
-            // spacing={{ xs: 2, md: 3 }}
-            // columns={{ xs: 1, sm: 2 }}
-          >
+          <Grid container spacing={2}>
             <Grid item xs={12} md={3}>
               {ScoreComponent}
             </Grid>
@@ -218,22 +206,8 @@ const Home: NextPage = () => {
           >
             {Charts}
           </Grid>
-          {/* <Copyright sx={{ pt: 4 }} /> */}
         </Container>
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{" "}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
     </div>
   );
 };
