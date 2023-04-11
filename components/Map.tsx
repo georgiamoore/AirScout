@@ -14,7 +14,7 @@ import {
 import Typography from "@mui/material/Typography";
 import * as ReactDOMClient from "react-dom/client";
 import { Bar } from "react-chartjs-2";
-import Chart from "chart.js/auto";
+
 type MapProps = {
   combinedData: {
     source: string;
@@ -400,18 +400,20 @@ const Map = ({ combinedData }: MapProps) => {
             e.features[0].properties.station_code
         );
 
-        // get array of all temperatures from stationData
-        const temperatures = unaveragedStationData.map((feature) => {
-          return feature.properties.temperature;
+        // get contextual data to generate bar charts
+        const contextualData = unaveragedStationData.map((feature) => {
+          return {
+            timestamp: new Date(feature.properties.timestamp).toString(),
+            temperature: feature.properties.temperature,
+            windspeed: feature.properties.windspeed,
+          };
         });
 
-        // get array of all windspeeds from stationData
-        const windspeeds = unaveragedStationData.map((feature) => {
-          return feature.properties.windspeed;
-        });
+        const chartData = {
+          datasets: [{ data: contextualData }],
+        };
 
         // todo humidity + pressure
-        // todo create chart for temperature, windspeed, humidity, pressure
 
         const coordinates = e.features[0].geometry.coordinates.slice();
         const properties = meanStationData[0].properties;
@@ -421,9 +423,11 @@ const Map = ({ combinedData }: MapProps) => {
         const stationInfoComponent = (
           <>
             <Typography variant="h6">
-              {stationName !== undefined ? stationName : "Aston sensor"}
+              <strong>
+                {stationName !== undefined ? stationName : "Aston sensor"}
+              </strong>
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body2">
               {"Average " +
                 pollutant.toUpperCase() +
                 ": " +
@@ -433,6 +437,103 @@ const Map = ({ combinedData }: MapProps) => {
                 ")"}
               <br /> {"Average temperature: " + properties.temperature + "°C"}
             </Typography>
+            {/* TODO this should be parameterised & refactored to be a functional component */}
+            {contextualData[0].temperature && (
+              <div className="max-h-32 mb-5">
+                <Typography variant="body1">
+                  <strong>Temperature</strong>
+                </Typography>
+                <Bar
+                  data={chartData}
+                  options={{
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    parsing: {
+                      xAxisKey: "timestamp",
+                      yAxisKey: "temperature",
+                    },
+                    scales: {
+                      x: {
+                        ticks: {
+                          callback: function (value, index, ticks) {
+                            // changes axis labels to be in format HH:MM
+                              let timestamp = new Date(
+                                this.getLabelForValue(value)
+                              );
+                              let time = timestamp.toTimeString().slice(0, 5);
+                            return time === "00:00" // additionally adds weekday to 00:00 label
+                              ? [
+                                  time,
+                                  timestamp.toLocaleDateString("en-GB", {
+                                    weekday: "short",
+                                  }),
+                                ]
+                              : time;
+                          },
+                          autoSkip: true,
+                          maxTicksLimit: 20,
+                          maxRotation: 0,
+                          minRotation: 0,
+                        },
+                      },
+                    },
+                  }}
+                ></Bar>
+              </div>
+            )}
+            {contextualData[0].windspeed && (
+              <div className="max-h-32 mb-5">
+                <Typography variant="body1">
+                  <strong>Windspeed</strong>
+                </Typography>
+                <Bar
+                  data={chartData}
+                  options={{
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    parsing: {
+                      xAxisKey: "timestamp",
+                      yAxisKey: "windspeed",
+                    },
+                    scales: {
+                      x: {
+                        ticks: {
+                          callback: function (value, index, ticks) {
+                            // changes axis labels to be in format HH:MM
+                              let timestamp = new Date(
+                                this.getLabelForValue(value)
+                              );
+                              let time = timestamp.toTimeString().slice(0, 5);
+                            return time === "00:00" // additionally adds weekday to 00:00 label
+                              ? [
+                                  time,
+                                  timestamp.toLocaleDateString("en-GB", {
+                                    weekday: "short",
+                                  }),
+                                ]
+                              : time;
+                          },
+                          autoSkip: true,
+                          maxTicksLimit: 20,
+                          maxRotation: 0,
+                          minRotation: 0,
+                        },
+                      },
+                    },
+                  }}
+                ></Bar>
+              </div>
+            )}
           </>
         );
 
@@ -455,6 +556,7 @@ const Map = ({ combinedData }: MapProps) => {
         })
           .setDOMContent(placeholder)
           .setLngLat(coordinates)
+          .setMaxWidth("400px")
           .addTo(map.current);
       }
     );
