@@ -264,6 +264,7 @@ const Map = ({ combinedData }: MapProps) => {
 
   // generates average pollutant values for each station & adds these to map as circle markers
   const addStationLayers = (map: MutableRefObject<any>, featureCollection) => {
+    if (featureCollection.data.features !== null) {
     // get array of unique stations
     const stationCodes = [
       ...new Set(
@@ -354,6 +355,7 @@ const Map = ({ combinedData }: MapProps) => {
           addedPollutantLayers.push(pollutant);
         }
     });
+  }
   };
 
   // adds a popup that appears on hover, with station name, pollutant value, timestamp & risk category
