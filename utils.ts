@@ -89,3 +89,5 @@ export const daqiHealthAdvice = {
       "Adults and children with lung problems, adults with heart problems, and older people, should avoid strenuous physical activity. People with asthma may find they need to use their reliever inhaler more often.",
   },
 };
+
+export const linkStyle = "font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"

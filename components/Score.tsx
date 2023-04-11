@@ -11,7 +11,7 @@ import ListItemText from "@mui/material/ListItemText";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Typography from "@mui/material/Typography";
 import Title from "./Title";
-import { daqiColourMap, daqiHealthAdvice } from "../utils";
+import { daqiColourMap, daqiHealthAdvice, linkStyle } from "../utils";
 import InfoIcon from "@mui/icons-material/Info";
 import HelpIcon from "@mui/icons-material/Help";
 
@@ -160,7 +160,7 @@ export default function Score({ score }) {
       {/* used to stick content to bottom of container */}
       <a
         href="/daqi"
-        className="font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"
+        className={linkStyle}
       >
         <HelpIcon className={"mr-1"} />
         {"What is the Air Quality Index?"}

@@ -2,6 +2,7 @@ import Typography from "@mui/material/Typography";
 import { NextPage } from "next";
 import styles from "../styles/Home.module.css";
 import InfoIcon from "@mui/icons-material/Info";
+import { linkStyle } from "../utils";
 
 const Pollutants: NextPage = () => {
   return (
@@ -62,14 +63,14 @@ const Pollutants: NextPage = () => {
           For more information please visit the{" "}
           <a
             href="https://www.who.int/teams/environment-climate-change-and-health/air-quality-and-health/health-impacts/types-of-pollutants"
-            className="font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"
+            className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
             WHO's air quality information page
           </a>{" "}
           and the{" "}<a
             href="https://www.epa.gov/criteria-air-pollutants"
-            className="font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"
+            className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
             US EPA's air pollutant information section

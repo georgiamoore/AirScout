@@ -1,7 +1,7 @@
 import Typography from "@mui/material/Typography";
 import { NextPage } from "next";
 import styles from "../styles/Home.module.css";
-import { daqiHealthAdvice } from "../utils";
+import { daqiHealthAdvice, linkStyle } from "../utils";
 import InfoIcon from "@mui/icons-material/Info";
 
 const DAQI: NextPage = () => {
@@ -93,15 +93,15 @@ const DAQI: NextPage = () => {
           For more information please visit{" "}
           <a
             href="https://uk-air.defra.gov.uk/air-pollution/daqi"
-            className="font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"
+            className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
-            DEFRA's DAQI information page
+            Defra's DAQI information page
           </a>{" "}
           and the{" "}
           <a
             href="https://www.metoffice.gov.uk/weather/guides/air-quality"
-            className="font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"
+            className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
             Met Office's air quality information page
