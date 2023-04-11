@@ -5,7 +5,6 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import * as turf from "@turf/turf";
 import { feature, FeatureCollection } from "@turf/turf";
 import Paper from "@mui/material/Paper";
-import RainLayer from "mapbox-gl-rain-layer";
 import {
   getPollutantValueRisk,
   pollutantUnits,
@@ -69,15 +68,9 @@ const Map = ({ combinedData }: MapProps) => {
   const [lng, setLng] = useState(-1.890401);
   const [lat, setLat] = useState(52.486243);
   const [zoom, setZoom] = useState(14);
-  const [rainUpdateTimestamp, setRainUpdateTimestamp] = useState(new Date());
   const mapContainer = useRef<any>(null);
   const map = useRef<mapboxgl.Map | any>(null);
-  const rainLayer = new RainLayer({
-    id: "rain",
-    source: "rainviewer",
-    scale: "noaa",
-    rainColor: "#0703fc",
-  });
+  
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
   const contextual = ["temperature", "pressure", "humidity", "windspeed"];
   let addedPollutantLayers = [];
@@ -196,7 +189,6 @@ const Map = ({ combinedData }: MapProps) => {
     });
 
     map.current.on("load", () => {
-      // addContextualLayers(map);
       locations.map((featureCollection) => {
         if (!map.current.getSource(featureCollection.source)) {
           // add new source & feature data to map
@@ -235,14 +227,7 @@ const Map = ({ combinedData }: MapProps) => {
     });
   });
 
-  // adds contextual information
-  // (only rain info for now)
-  const addContextualLayers = (map: MutableRefObject<any>) => {
-    map.current.addLayer(rainLayer);
-    // rainLayer.on("refresh", (data: { timestamp: number }) => {
-    //   setRainUpdateTimestamp(new Date(data.timestamp * 1000));
-    // });
-  };
+
 
   // adds the interpolation layers
   const addInterpolationLayers = (map: MutableRefObject<any>, source) => {
