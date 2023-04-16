@@ -295,7 +295,9 @@ const Map = ({ combinedData }: MapProps) => {
         combinedPropertyList.map((property) => {
           const propertyValues = station.map((feature) => {
             return feature.properties[property];
-          });
+            }).filter(
+              (value) => value !== undefined
+            );
           // sums all values for property & divides by total num
           const meanValue =
             propertyValues.reduce((a, b) => a + b, 0) / propertyValues.length;
