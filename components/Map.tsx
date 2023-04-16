@@ -67,7 +67,7 @@ const Map = ({ combinedData }: MapProps) => {
   const [activePollutant, setActivePollutant] = useState("pm2.5");
   const [lng, setLng] = useState(-1.890401);
   const [lat, setLat] = useState(52.486243);
-  const [zoom, setZoom] = useState(14);
+  const [zoom, setZoom] = useState(13);
   const mapContainer = useRef<any>(null);
   const map = useRef<mapboxgl.Map | any>(null);
   
@@ -227,8 +227,6 @@ const Map = ({ combinedData }: MapProps) => {
     });
   });
 
-
-
   // adds the interpolation layers
   const addInterpolationLayers = (map: MutableRefObject<any>, source) => {
     const pollutant = source.split("-")[0];
@@ -293,11 +291,11 @@ const Map = ({ combinedData }: MapProps) => {
       stationFeatures.map((station) => {
         const meanValues = {};
         combinedPropertyList.map((property) => {
-          const propertyValues = station.map((feature) => {
+            const propertyValues = station
+              .map((feature) => {
             return feature.properties[property];
-            }).filter(
-              (value) => value !== undefined
-            );
+              })
+              .filter((value) => value !== undefined);
           // sums all values for property & divides by total num
           const meanValue =
             propertyValues.reduce((a, b) => a + b, 0) / propertyValues.length;
@@ -390,13 +388,22 @@ const Map = ({ combinedData }: MapProps) => {
         );
 
         // get contextual data to generate bar charts
-        const contextualData = unaveragedStationData.map((feature) => {
+        const contextualData = unaveragedStationData
+          .map((feature) => {
+            if (
+              !(
+                feature.properties.temperature === undefined &&
+                feature.properties.windspeed === undefined
+              )
+            ) {
           return {
             timestamp: new Date(feature.properties.timestamp).toString(),
             temperature: feature.properties.temperature,
             windspeed: feature.properties.windspeed,
           };
-        });
+            }
+          })
+          .filter((value) => value !== undefined);
 
         const chartData = {
           datasets: [{ data: contextualData }],
