@@ -17,14 +17,16 @@ import HelpIcon from "@mui/icons-material/Help";
 
 export default function Score({ score }) {
   let highest = Object.entries(score).reduce((highest, [pollutant, info]) => {
-    if (highest.daqi === undefined) highest = highest[1];
+    if (highest.daqi === undefined) {
+      highest = {
+        ...highest[1],
+        pollutant: highest[0],
+        colour: daqiColourMap[highest[1].daqi].colour,
+        risk: daqiColourMap[highest[1].daqi].risk,
+      }
+    };
     return highest.daqi > info.daqi
-      ? {
-          ...highest,
-          pollutant: pollutant,
-          colour: daqiColourMap[highest.daqi].colour,
-          risk: daqiColourMap[highest.daqi].risk,
-        }
+      ? highest
       : {
           ...info,
           pollutant: pollutant,
