@@ -16,16 +16,22 @@ import InfoIcon from "@mui/icons-material/Info";
 import HelpIcon from "@mui/icons-material/Help";
 
 export default function Score({ score }) {
-  let highest = Object.entries(score).reduce((highest, [pollutant, info]) =>
-    highest.daqi > info.daqi
-      ? highest
+  let highest = Object.entries(score).reduce((highest, [pollutant, info]) => {
+    if (highest.daqi === undefined) highest = highest[1];
+    return highest.daqi > info.daqi
+      ? {
+          ...highest,
+          pollutant: pollutant,
+          colour: daqiColourMap[highest.daqi].colour,
+          risk: daqiColourMap[highest.daqi].risk,
+        }
       : {
           ...info,
           pollutant: pollutant,
           colour: daqiColourMap[info.daqi].colour,
           risk: daqiColourMap[info.daqi].risk,
-        }
-  );
+        };
+  });
 
   return (
     <Paper
