@@ -4,14 +4,11 @@ import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
 import React, { useState } from "react";
-import ContentLoader from "react-content-loader";
 import Container from "@mui/material/Container";
 import ChartContainer from "../components/ChartContainer";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import useSWR, { mutate } from "swr";
-import Title from "../components/Title";
-import Score from "../components/Score";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
@@ -23,6 +20,19 @@ let yesterday = date.toLocaleDateString("en-GB", {
   year: "numeric",
   month: "long",
   day: "numeric",
+});
+
+// prevents server side rendering as this causes hydration errors (server/client mismatch)
+const ContentLoader = dynamic(() => import("react-content-loader"), {
+  ssr: false, 
+});
+
+const Title = dynamic(() => import("../components/Title"), {
+  ssr: false,
+});
+
+const Score = dynamic(() => import("../components/Score"), {
+  ssr: false,
 });
 
 const MapPlaceholder = (
