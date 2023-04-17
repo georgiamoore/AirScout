@@ -23,10 +23,10 @@ export default function LineChart({ data }) {
     const pollutantRange = pollutantValueRanges[pollutant];
     if (pollutantRange == null) return "000";
 
-    const value = ctx.p1.parsed.y;
+    const value = ctx.p0.parsed.y;
 
     const range = pollutantRange.find(
-      ({ range }) => value >= range[0] && value < range[1]
+      ({ range }) => value >= range[0] && value < range[1] + 1
     );
     const colour = range ? range.colour : green[300];
     return colour;
@@ -36,9 +36,9 @@ export default function LineChart({ data }) {
     if (pollutantRange == null) return "000";
     let value = ctx.dataset.data[ctx.dataIndex][pollutant];
     const range = pollutantRange.find(
-      ({ range }) => value >= range[0] && value < range[1]
+      ({ range }) => value >= range[0] && value <= range[1] + 1
     );
-    const colour = range ? range.colour : green[300];
+    const colour = range ? range.colour : "000";
     return colour;
   };
   const chartData = {
@@ -57,7 +57,9 @@ export default function LineChart({ data }) {
 
   return (
     <React.Fragment>
-      <Title>{chartSubject.toUpperCase()} ({pollutantUnits[chartSubject]})</Title>
+      <Title>
+        {chartSubject.toUpperCase()} ({pollutantUnits[chartSubject]})
+      </Title>
       <div
         className="chart-container"
         style={{ position: "relative", height: "100%", width: "100%" }}
