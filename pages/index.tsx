@@ -22,10 +22,14 @@ let yesterday = date.toLocaleDateString("en-GB", {
   month: "long",
   day: "numeric",
 });
+const inactiveButtonStyle =
+  "inline-block p-4 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-600";
+const activeButtonStyle =
+  "inline-block p-4 border-b-2 border-indigo-700 text-indigo-700";
 
 // prevents server side rendering as this causes hydration errors (server/client mismatch)
 const ContentLoader = dynamic(() => import("react-content-loader"), {
-  ssr: false, 
+  ssr: false,
 });
 
 const Title = dynamic(() => import("../components/Title"), {
@@ -136,7 +140,6 @@ const Home: NextPage = () => {
     apiURL + "/defra",
     // apiURL + "/demo?feature=aston",
     // apiURL + "/demo?feature=defra",
-
   ]);
 
   const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
@@ -151,13 +154,17 @@ const Home: NextPage = () => {
   let MapComponent, Charts, ScoreComponent;
   if (mapDataLoading) {
     MapComponent = MapPlaceholder;
-  } else if (mapData) {
+  } else if (mapData && mapData[0]) {
     MapComponent = <Map combinedData={mapData} />;
+  } else {
+    MapComponent = (
+      <Title>Error: API currently unavailable. Please try again later.</Title>
+    );
   }
-  
+
   if (chartDataLoading) {
     Charts = ChartPlaceholder;
-  } else if (chartData) {
+  } else if (chartData && chartData[0]) {
     const timePeriods = Object.keys(chartData[0]);
     const filterChartDataByPollutant = (pollutant) => {
       return chartData.map((data) => {
@@ -178,17 +185,75 @@ const Home: NextPage = () => {
     };
 
     Charts = (
-      <>
-        {pollutants.map((pollutant) => {
-          return (
-            <ChartContainer
-              chart={filterChartDataByPollutant(pollutant)}
-              key={pollutant + "container"}
-              visibleChart={visibleChart}
-            />
-          );
-        })}
-      </>
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        <Title>Average pollutant values</Title>
+        {/* table styling adapted from https://flowbite.com/docs/components/tabs/#interactive-tabs */}
+        <ul className="w-full border-b flex items-center gap-x-3 overflow-x-auto">
+          <li>
+            <button
+              className={
+                visibleChart === CHART_CONTAINER_STATE.annual
+                  ? activeButtonStyle
+                  : inactiveButtonStyle
+              }
+              onClick={() => setVisibleChart(CHART_CONTAINER_STATE.annual)}
+            >
+              Annual
+            </button>
+          </li>
+          <li>
+            <button
+              className={
+                visibleChart === CHART_CONTAINER_STATE.monthly
+                  ? activeButtonStyle
+                  : inactiveButtonStyle
+              }
+              onClick={() => setVisibleChart(CHART_CONTAINER_STATE.monthly)}
+            >
+              Monthly
+            </button>
+          </li>
+          <li>
+            <button
+              className={
+                visibleChart === CHART_CONTAINER_STATE.weekly
+                  ? activeButtonStyle
+                  : inactiveButtonStyle
+              }
+              onClick={() => setVisibleChart(CHART_CONTAINER_STATE.weekly)}
+            >
+              Weekly
+            </button>
+          </li>
+          <li>
+            <button
+              className={
+                visibleChart === CHART_CONTAINER_STATE.daily
+                  ? activeButtonStyle
+                  : inactiveButtonStyle
+              }
+              onClick={() => setVisibleChart(CHART_CONTAINER_STATE.daily)}
+            >
+              Daily
+            </button>
+          </li>
+        </ul>
+        <Grid
+          container
+          spacing={{ xs: 2, md: 3 }}
+          columns={{ xs: 1, sm: 2, md: 12 }}
+        >
+          {pollutants.map((pollutant) => {
+            return (
+              <ChartContainer
+                chart={filterChartDataByPollutant(pollutant)}
+                key={pollutant + "container"}
+                visibleChart={visibleChart}
+              />
+            );
+          })}
+        </Grid>
+      </Container>
     );
   }
 
@@ -196,23 +261,21 @@ const Home: NextPage = () => {
     ScoreComponent = ScorePlaceholder;
   } else if (daqiData) {
     if (daqiData[0] === undefined) {
-      console.log(daqiDataLoading);
-      console.log(daqiData);
       daqiDataLoading = true;
       mutate([`${apiURL}/daqi`, multipleFetcher]);
     } else {
       ScoreComponent = <Score score={daqiData[0]} />;
     }
   }
-  let inactiveButtonStyle =
-    "inline-block p-4 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-600";
-  let activeButtonStyle =
-    "inline-block p-4 border-b-2 border-indigo-700 text-indigo-700";
+
   return (
     <div className={styles.container}>
       <Head>
         <title>AirScout</title>
-        <meta name="description" content="Air pollution across the West Midlands" />
+        <meta
+          name="description"
+          content="Air pollution across the West Midlands"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
@@ -227,67 +290,8 @@ const Home: NextPage = () => {
             </Grid>
           </Grid>
         </Container>
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-          <Title>Average pollutant values</Title>
-          {/* table styling adapted from https://flowbite.com/docs/components/tabs/#interactive-tabs */}
-          <ul className="w-full border-b flex items-center gap-x-3 overflow-x-auto">
-            <li>
-              <button
-                className={
-                  visibleChart === CHART_CONTAINER_STATE.annual
-                    ? activeButtonStyle
-                    : inactiveButtonStyle
-                }
-                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.annual)}
-              >
-                Annual
-              </button>
-            </li>
-            <li>
-              <button
-                className={
-                  visibleChart === CHART_CONTAINER_STATE.monthly
-                    ? activeButtonStyle
-                    : inactiveButtonStyle
-                }
-                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.monthly)}
-              >
-                Monthly
-              </button>
-            </li>
-            <li>
-              <button
-                className={
-                  visibleChart === CHART_CONTAINER_STATE.weekly
-                    ? activeButtonStyle
-                    : inactiveButtonStyle
-                }
-                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.weekly)}
-              >
-                Weekly
-              </button>
-            </li>
-            <li>
-              <button
-                className={
-                  visibleChart === CHART_CONTAINER_STATE.daily
-                    ? activeButtonStyle
-                    : inactiveButtonStyle
-                }
-                onClick={() => setVisibleChart(CHART_CONTAINER_STATE.daily)}
-              >
-                Daily
-              </button>
-            </li>
-          </ul>
-          <Grid
-            container
-            spacing={{ xs: 2, md: 3 }}
-            columns={{ xs: 1, sm: 2, md: 12 }}
-          >
-            {Charts}
-          </Grid>
-        </Container>
+
+        {Charts}
       </main>
     </div>
   );
