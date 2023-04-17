@@ -7,12 +7,15 @@ import { feature, FeatureCollection } from "@turf/turf";
 import Paper from "@mui/material/Paper";
 import {
   getPollutantValueRisk,
+  linkStyle,
+  paperHeight,
   pollutantUnits,
   pollutantValueRanges,
 } from "../utils";
 import Typography from "@mui/material/Typography";
 import * as ReactDOMClient from "react-dom/client";
 import { Bar } from "react-chartjs-2";
+import HelpIcon from "@mui/icons-material/Help";
 
 type MapProps = {
   combinedData: {
@@ -70,7 +73,7 @@ const Map = ({ combinedData }: MapProps) => {
   const [zoom, setZoom] = useState(13);
   const mapContainer = useRef<any>(null);
   const map = useRef<mapboxgl.Map | any>(null);
-  
+
   const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
   const contextual = ["temperature", "pressure", "humidity", "windspeed"];
   let addedPollutantLayers = [];
@@ -263,99 +266,99 @@ const Map = ({ combinedData }: MapProps) => {
   // generates average pollutant values for each station & adds these to map as circle markers
   const addStationLayers = (map: MutableRefObject<any>, featureCollection) => {
     if (featureCollection.data.features !== null) {
-    // get array of unique stations
-    const stationCodes = [
-      ...new Set(
-        featureCollection.data.features.map((feature) => {
+      // get array of unique stations
+      const stationCodes = [
+        ...new Set(
+          featureCollection.data.features.map((feature) => {
+            return (
+              feature.properties.station_code || feature.properties.sensor_id
+            );
+          })
+        ),
+      ];
+
+      // generates array of arrays of features for each station
+      const stationFeatures = stationCodes.map((stationCode) => {
+        return featureCollection.data.features.filter((feature) => {
           return (
-            feature.properties.station_code || feature.properties.sensor_id
+            feature.properties.station_code === stationCode ||
+            feature.properties.sensor_id === stationCode
           );
-        })
-      ),
-    ];
-
-    // generates array of arrays of features for each station
-    const stationFeatures = stationCodes.map((stationCode) => {
-      return featureCollection.data.features.filter((feature) => {
-        return (
-          feature.properties.station_code === stationCode ||
-          feature.properties.sensor_id === stationCode
-        );
+        });
       });
-    });
 
-    const combinedPropertyList = pollutants.concat(contextual);
+      const combinedPropertyList = pollutants.concat(contextual);
 
-    // generate mean pollutant + contextual data values for each station
-    const stationFeatureCollection = turf.featureCollection(
-      stationFeatures.map((station) => {
-        const meanValues = {};
-        combinedPropertyList.map((property) => {
+      // generate mean pollutant + contextual data values for each station
+      const stationFeatureCollection = turf.featureCollection(
+        stationFeatures.map((station) => {
+          const meanValues = {};
+          combinedPropertyList.map((property) => {
             const propertyValues = station
               .map((feature) => {
-            return feature.properties[property];
+                return feature.properties[property];
               })
               .filter((value) => value !== undefined);
-          // sums all values for property & divides by total num
-          const meanValue =
-            propertyValues.reduce((a, b) => a + b, 0) / propertyValues.length;
-          // check if mean is a number, round to 2 decimal places if so
-          if (!isNaN(meanValue))
-            meanValues[property] = Math.round(meanValue * 100) / 100;
-        });
-        // get unaveraged proprties for station
-        meanValues.station_code = station[0].properties.station_code;
-        meanValues.station_name = station[0].properties.station_name;
-        meanValues.sensor_id = station[0].properties.sensor_id;
-
-        return {
-          type: "Feature",
-          geometry: station[0].geometry,
-          properties: meanValues,
-        };
-      })
-    );
-
-    map.current.addSource(featureCollection.source + "-stations", {
-      type: "geojson",
-      data: stationFeatureCollection,
-    });
-    // adding map layers for each pollutant with circle markers for each station/sensor
-    pollutants.map((pollutant) => {
-      if (stationFeatureCollection.features !== null)
-        if (
-          stationFeatureCollection.features.some(
-            (obj) =>
-              obj.properties &&
-              obj.properties[pollutant] != null &&
-              !isNaN(obj.properties[pollutant])
-          )
-        ) {
-          map.current.addLayer({
-            id: pollutant + featureCollection.source,
-            type: "circle",
-            source: featureCollection.source + "-stations",
-            filter: ["has", pollutant],
-            paint: {
-              "circle-color": colourInterpolationsMap[pollutant],
-              "circle-radius": 8,
-              "circle-stroke-width": 2,
-              "circle-stroke-color": "#ffffff",
-            },
-            layout: {
-              visibility: pollutant === "pm2.5" ? "visible" : "none",
-            },
+            // sums all values for property & divides by total num
+            const meanValue =
+              propertyValues.reduce((a, b) => a + b, 0) / propertyValues.length;
+            // check if mean is a number, round to 2 decimal places if so
+            if (!isNaN(meanValue))
+              meanValues[property] = Math.round(meanValue * 100) / 100;
           });
-          addStationInfoPopup(
-            map,
-            pollutant,
-            featureCollection.source,
-            stationFeatureCollection
-          );
-          addedPollutantLayers.push(pollutant);
-        }
-    });
-  }
+          // get unaveraged proprties for station
+          meanValues.station_code = station[0].properties.station_code;
+          meanValues.station_name = station[0].properties.station_name;
+          meanValues.sensor_id = station[0].properties.sensor_id;
+
+          return {
+            type: "Feature",
+            geometry: station[0].geometry,
+            properties: meanValues,
+          };
+        })
+      );
+
+      map.current.addSource(featureCollection.source + "-stations", {
+        type: "geojson",
+        data: stationFeatureCollection,
+      });
+      // adding map layers for each pollutant with circle markers for each station/sensor
+      pollutants.map((pollutant) => {
+        if (stationFeatureCollection.features !== null)
+          if (
+            stationFeatureCollection.features.some(
+              (obj) =>
+                obj.properties &&
+                obj.properties[pollutant] != null &&
+                !isNaN(obj.properties[pollutant])
+            )
+          ) {
+            map.current.addLayer({
+              id: pollutant + featureCollection.source,
+              type: "circle",
+              source: featureCollection.source + "-stations",
+              filter: ["has", pollutant],
+              paint: {
+                "circle-color": colourInterpolationsMap[pollutant],
+                "circle-radius": 8,
+                "circle-stroke-width": 2,
+                "circle-stroke-color": "#ffffff",
+              },
+              layout: {
+                visibility: pollutant === "pm2.5" ? "visible" : "none",
+              },
+            });
+            addStationInfoPopup(
+              map,
+              pollutant,
+              featureCollection.source,
+              stationFeatureCollection
+            );
+            addedPollutantLayers.push(pollutant);
+          }
+      });
+    }
   };
 
   // adds a popup that appears on hover, with station name, pollutant value, timestamp & risk category
@@ -380,7 +383,7 @@ const Map = ({ combinedData }: MapProps) => {
             feature.properties.station_code ===
             e.features[0].properties.station_code
         );
-
+       
         const meanStationData = stationFeatureCollection.features.filter(
           (feature) =>
             feature.properties.station_code ===
@@ -396,11 +399,11 @@ const Map = ({ combinedData }: MapProps) => {
                 feature.properties.windspeed === undefined
               )
             ) {
-          return {
-            timestamp: new Date(feature.properties.timestamp).toString(),
-            temperature: feature.properties.temperature,
-            windspeed: feature.properties.windspeed,
-          };
+              return {
+                timestamp: new Date(feature.properties.timestamp).toString(),
+                temperature: feature.properties.temperature,
+                windspeed: feature.properties.windspeed,
+              };
             }
           })
           .filter((value) => value !== undefined);
@@ -676,7 +679,7 @@ const Map = ({ combinedData }: MapProps) => {
           p: 2,
           display: "flex",
           flexDirection: "column",
-          height: 600,
+          height: paperHeight,
         }}
       >
         <Title>{"Pollutant map for " + yesterday}</Title>
@@ -684,6 +687,13 @@ const Map = ({ combinedData }: MapProps) => {
           <nav id="menu" />
           <PollutantInfo pollutant={activePollutant} />
         </div>
+        <br />
+        <div className={"flex-grow"} />{" "}
+        {/*^ used to stick content to bottom of container */}
+        <a href="/map-info" className={linkStyle}>
+          <HelpIcon className={"mr-1"} />
+          {"What does this map mean?"}
+        </a>
       </Paper>
     </>
   );

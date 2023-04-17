@@ -11,7 +11,12 @@ import ListItemText from "@mui/material/ListItemText";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Typography from "@mui/material/Typography";
 import Title from "./Title";
-import { daqiColourMap, daqiHealthAdvice, linkStyle } from "../utils";
+import {
+  daqiColourMap,
+  daqiHealthAdvice,
+  linkStyle,
+  paperHeight,
+} from "../utils";
 import InfoIcon from "@mui/icons-material/Info";
 import HelpIcon from "@mui/icons-material/Help";
 
@@ -41,7 +46,7 @@ export default function Score({ score }) {
         p: 2,
         display: "flex",
         flexDirection: "column",
-        height: { md: 600, sm: 350 },
+        height: { md: paperHeight, sm: 350 },
         overflow: "auto",
       }}
     >
@@ -166,10 +171,7 @@ export default function Score({ score }) {
       </div>
       <div className={"flex-grow"} />{" "}
       {/* used to stick content to bottom of container */}
-      <a
-        href="/daqi"
-        className={linkStyle}
-      >
+      <a href="/daqi" className={linkStyle}>
         <HelpIcon className={"mr-1"} />
         {"What is the Air Quality Index?"}
       </a>

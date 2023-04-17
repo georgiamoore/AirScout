@@ -9,6 +9,7 @@ import ChartContainer from "../components/ChartContainer";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import useSWR, { mutate } from "swr";
+import { paperHeight } from "../utils";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
@@ -42,7 +43,7 @@ const MapPlaceholder = (
         p: 2,
         display: "flex",
         flexDirection: "column",
-        height: 600,
+        height: paperHeight,
       }}
     >
       <Title>{"Pollutant map for " + yesterday}</Title>
@@ -84,7 +85,7 @@ const ScorePlaceholder = (
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      height: { md: 600, sm: 350 },
+      height: { md: paperHeight, sm: 350 },
     }}
   >
     <Title>Highest Daily Air Quality Index</Title>
@@ -133,13 +134,18 @@ const Home: NextPage = () => {
   const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
     apiURL + "/aston",
     apiURL + "/defra",
+    // apiURL + "/demo?feature=aston",
+    // apiURL + "/demo?feature=defra",
+
   ]);
 
   const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
     `${apiURL}/stats`,
+    // `${apiURL}/demo?feature=stats`,
   ]);
   const { data: daqiData, isLoading: daqiDataLoading } = useMultipleRequests([
     `${apiURL}/daqi`,
+    // `${apiURL}/demo?feature=daqi`,
   ]);
 
   let MapComponent, Charts, ScoreComponent;
@@ -148,7 +154,7 @@ const Home: NextPage = () => {
   } else if (mapData) {
     MapComponent = <Map combinedData={mapData} />;
   }
-
+  
   if (chartDataLoading) {
     Charts = ChartPlaceholder;
   } else if (chartData) {

@@ -1,8 +1,7 @@
-import { green, yellow, orange, red, purple } from "@mui/material/colors";
-// import { purple } from "tailwindcss/colors";
+import { green, yellow, red, purple } from "@mui/material/colors";
+
 export const pollutantValueRanges = {
   // Ranges from https://uk-air.defra.gov.uk/air-pollution/daqi?view=more-info
-  // TODO ensure data period matches (e.g. ozone should be 8 hour average)
   pm10: [
     { range: [0, 50], colour: green[600], risk: "Low" },
     { range: [51, 75], colour: yellow[900], risk: "Moderate" },
@@ -91,3 +90,4 @@ export const daqiHealthAdvice = {
 };
 
 export const linkStyle = "font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"
+export const paperHeight = 700;
