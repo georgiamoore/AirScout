@@ -58,28 +58,56 @@ const MapPlaceholder = (
   </>
 );
 
-const ChartPlaceholder = pollutants.map((pollutant) => (
-  <Grid
-    item
-    xs={2}
-    sm={4}
-    md={4}
-    key={pollutant + "-chart-placeholder-container"}
-  >
-    <Paper
-      sx={{
-        p: 2,
-        display: "flex",
-        flexDirection: "column",
-        height: 240,
-      }}
+const ChartPlaceholder = (
+  <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+    <Title>Average pollutant values</Title>
+    {/* table styling adapted from https://flowbite.com/docs/components/tabs/#interactive-tabs */}
+    <ul className="w-full border-b flex items-center gap-x-3 overflow-x-auto">
+      <li>
+        <button className={activeButtonStyle}>Annual</button>
+      </li>
+      <li>
+        <button className={inactiveButtonStyle}>Monthly</button>
+      </li>
+      <li>
+        <button className={inactiveButtonStyle}>Weekly</button>
+      </li>
+      <li>
+        <button className={inactiveButtonStyle}>Daily</button>
+      </li>
+    </ul>
+    <Grid
+      container
+      spacing={{ xs: 2, md: 3 }}
+      columns={{ xs: 1, sm: 2, md: 12 }}
     >
-      <ContentLoader width="100%" height="100%">
-        <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
-      </ContentLoader>
-    </Paper>
-  </Grid>
-));
+      {pollutants.map((pollutant) => {
+        return (
+          <Grid
+            item
+            xs={2}
+            sm={4}
+            md={4}
+            key={pollutant + "-chart-placeholder-container"}
+          >
+            <Paper
+              sx={{
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                height: 240,
+              }}
+            >
+              <ContentLoader width="100%" height="100%">
+                <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
+              </ContentLoader>
+            </Paper>
+          </Grid>
+        );
+      })}
+    </Grid>
+  </Container>
+);
 
 const ScorePlaceholder = (
   <Paper
@@ -136,19 +164,19 @@ const Home: NextPage = () => {
 
   // TODO these requests should have their own error messages (fed into placeholder if needed)
   const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
-    apiURL + "/aston",
-    apiURL + "/defra",
-    // apiURL + "/demo?feature=aston",
-    // apiURL + "/demo?feature=defra",
+    // apiURL + "/aston",
+    // apiURL + "/defra",
+    apiURL + "/demo?feature=aston",
+    apiURL + "/demo?feature=defra",
   ]);
 
   const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
-    `${apiURL}/stats`,
-    // `${apiURL}/demo?feature=stats`,
+    // `${apiURL}/stats`,
+    `${apiURL}/demo?feature=stats`,
   ]);
   const { data: daqiData, isLoading: daqiDataLoading } = useMultipleRequests([
-    `${apiURL}/daqi`,
-    // `${apiURL}/demo?feature=daqi`,
+    // `${apiURL}/daqi`,
+    `${apiURL}/demo?feature=daqi`,
   ]);
 
   let MapComponent, Charts, ScoreComponent;

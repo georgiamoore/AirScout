@@ -440,7 +440,7 @@ const Map = ({ combinedData }: MapProps) => {
             {contextualData[0].temperature && (
               <div className="max-h-32 mb-5">
                 <Typography variant="body1">
-                  <strong>Temperature</strong>
+                  <strong>Temperature (°C)</strong>
                 </Typography>
                 <Bar
                   data={chartData}
@@ -501,7 +501,7 @@ const Map = ({ combinedData }: MapProps) => {
             {contextualData[0].windspeed && (
               <div className="max-h-32 mb-5">
                 <Typography variant="body1">
-                  <strong>Windspeed</strong>
+                  <strong>Windspeed (m/s)</strong>
                 </Typography>
                 <Bar
                   data={chartData}
