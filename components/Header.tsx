@@ -31,7 +31,9 @@ function ResponsiveAppBar() {
     <AppBar position="static" sx={{ background: "rgb(79 70 229)" }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <CloudIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
+          <a href="/">
+            <CloudIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
+          </a>
           <Typography
             variant="h6"
             noWrap
@@ -79,9 +81,7 @@ function ResponsiveAppBar() {
             >
               {pages.map((page) => (
                 <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <a href={"/" + page}>
-                    {page}
-                  </a>
+                  <a href={"/" + page}>{page}</a>
                 </MenuItem>
               ))}
             </Menu>
