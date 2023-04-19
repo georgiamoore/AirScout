@@ -22,6 +22,7 @@ type MapProps = {
     source: string;
     data: FeatureCollection;
   }[];
+  mapboxToken: string;
 };
 
 const generateColourInterpolationValues = (pollutantName, valueRanges) => {
@@ -66,7 +67,7 @@ const PollutantInfo = ({ pollutant }) => (
   </div>
 );
 
-const Map = ({ combinedData }: MapProps) => {
+const Map = ({ combinedData, mapboxToken }: MapProps) => {
   const [activePollutant, setActivePollutant] = useState("pm2.5");
   const [lng, setLng] = useState(-1.890401);
   const [lat, setLat] = useState(52.486243);
@@ -86,7 +87,7 @@ const Map = ({ combinedData }: MapProps) => {
     );
   });
 
-  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+  mapboxgl.accessToken = mapboxToken ?? "";
   const [locations, setLocations] = useState<
     {
       source: string;

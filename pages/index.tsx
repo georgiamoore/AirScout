@@ -11,7 +11,12 @@ import Paper from "@mui/material/Paper";
 import useSWR, { mutate } from "swr";
 import { paperHeight } from "../utils";
 
-const apiURL = process.env.NEXT_PUBLIC_API_URL;
+export async function getServerSideProps() {
+  const mapboxToken = process.env.MAPBOX_TOKEN
+  const apiURL = process.env.API_URL;
+  return { props: { mapboxToken, apiURL } }
+}
+
 const pollutants = ["pm2.5", "pm10", "o3", "no2", "so2"];
 
 let date = new Date();
@@ -132,7 +137,7 @@ const Map = dynamic(() => import("../components/Map"), {
   ssr: false,
 });
 
-const Home: NextPage = () => {
+const Home: NextPage = ({mapboxToken, apiURL}) => {
   const CHART_CONTAINER_STATE = {
     annual: "annual",
     monthly: "monthly",
@@ -183,7 +188,7 @@ const Home: NextPage = () => {
   if (mapDataLoading) {
     MapComponent = MapPlaceholder;
   } else if (mapData && mapData[0]) {
-    MapComponent = <Map combinedData={mapData} />;
+    MapComponent = <Map combinedData={mapData} mapboxToken={mapboxToken} />;
   } else {
     MapComponent = (
       <Title>Error: API currently unavailable. Please try again later.</Title>
