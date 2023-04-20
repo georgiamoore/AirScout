@@ -85,7 +85,7 @@ export default function Score({ score }) {
           </Typography>
         </div> */}
         {/* adapted from https://flowbite.com/docs/components/alerts/#additional-content */}
-        <div className="w-full p-4 mb-4 text-indigo-800 border border-indigo-300 rounded-lg bg-indigo-50 dark:bg-gray-800 dark:text-indigo-400 dark:border-indigo-800">
+        <div className="w-full p-4 mb-4 text-indigo-800 border border-indigo-300 rounded-lg bg-indigo-50">
           <div className="flex items-center">
             <InfoIcon className="w-5 h-5 mr-1" />
             <h3 className="text-lg font-medium">Health advice</h3>

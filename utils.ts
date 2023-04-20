@@ -89,5 +89,5 @@ export const daqiHealthAdvice = {
   },
 };
 
-export const linkStyle = "font-medium text-indigo-600 dark:text-indigo-500 hover:underline items-center"
+export const linkStyle = "font-medium text-indigo-600 hover:underline items-center"
 export const paperHeight = 700;
