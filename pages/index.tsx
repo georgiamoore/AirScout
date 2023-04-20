@@ -169,19 +169,19 @@ const Home: NextPage = ({mapboxToken, apiURL}) => {
 
   // TODO these requests should have their own error messages (fed into placeholder if needed)
   const { data: mapData, isLoading: mapDataLoading } = useMultipleRequests([
-    // apiURL + "/aston",
-    // apiURL + "/defra",
-    apiURL + "/demo?feature=aston",
-    apiURL + "/demo?feature=defra",
+    apiURL + "/aston",
+    apiURL + "/defra",
+    // apiURL + "/demo?feature=aston",
+    // apiURL + "/demo?feature=defra",
   ]);
 
   const { data: chartData, isLoading: chartDataLoading } = useMultipleRequests([
-    // `${apiURL}/stats`,
-    `${apiURL}/demo?feature=stats`,
+    `${apiURL}/stats`,
+    // `${apiURL}/demo?feature=stats`,
   ]);
   const { data: daqiData, isLoading: daqiDataLoading } = useMultipleRequests([
-    // `${apiURL}/daqi`,
-    `${apiURL}/demo?feature=daqi`,
+    `${apiURL}/daqi`,
+    // `${apiURL}/demo?feature=daqi`,
   ]);
 
   let MapComponent, Charts, ScoreComponent;
