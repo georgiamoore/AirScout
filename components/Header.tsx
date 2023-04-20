@@ -10,6 +10,7 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import CloudIcon from "@mui/icons-material/Cloud";
+import Link from "next/link";
 
 const pages = ["about", "pollutants", "daqi"];
 
@@ -31,9 +32,11 @@ function ResponsiveAppBar() {
     <AppBar position="static" sx={{ background: "rgb(79 70 229)" }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <a href="/">
-            <CloudIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
-          </a>
+          <Link href="/">
+            <a>
+              <CloudIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
+            </a>
+          </Link>
           <Typography
             variant="h6"
             noWrap

@@ -18,7 +18,7 @@ const Pollutants: NextPage = () => {
         <br/>
         <Typography>
           PM consists of a mixture of solid particles and liquid droplets suspended in air. 
-          PM is generally divided into two groups, categorised by the particles' size: PM10 and PM2.5. 
+          PM is generally divided into two groups, categorised by the particles&apos; size: PM10 and PM2.5. 
           <br/>PM10 = particles with a diameter of 10 micrometres or less.
           <br/>PM2.5 = particles with a diameter of 2.5 micrometres or less. 
           <br/>Sources of PM typically include combustion of fossil fuels, traffic and industrial activities. 
@@ -66,14 +66,14 @@ const Pollutants: NextPage = () => {
             className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
-            WHO's air quality information page
+            WHO&apos;s air quality information page
           </a>{" "}
           and the{" "}<a
             href="https://www.epa.gov/criteria-air-pollutants"
             className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
-            US EPA's air pollutant information section
+            US EPA&apos;s air pollutant information section
           </a>.
         </Typography>
       </div>

@@ -50,7 +50,7 @@ const About: NextPage = () => {
         <br />
 
         <Typography>
-          Pollutant measurements from Defra's{" "}
+          Pollutant measurements from Defra&apos;s{" "}
           <a
             href="https://uk-air.defra.gov.uk/networks/network-info?view=aurn"
             className={linkStyle}

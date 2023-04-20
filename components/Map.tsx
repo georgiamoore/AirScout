@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import Title from "./Title";
@@ -16,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import * as ReactDOMClient from "react-dom/client";
 import { Bar } from "react-chartjs-2";
 import HelpIcon from "@mui/icons-material/Help";
+import Link from "next/link";
 
 type MapProps = {
   combinedData: {
@@ -384,7 +386,7 @@ const Map = ({ combinedData, mapboxToken }: MapProps) => {
             feature.properties.station_code ===
             e.features[0].properties.station_code
         );
-       
+
         const meanStationData = stationFeatureCollection.features.filter(
           (feature) =>
             feature.properties.station_code ===
@@ -691,10 +693,12 @@ const Map = ({ combinedData, mapboxToken }: MapProps) => {
         <br />
         <div className={"flex-grow"} />{" "}
         {/*^ used to stick content to bottom of container */}
-        <a href="/map-info" className={linkStyle}>
-          <HelpIcon className={"mr-1"} />
-          {"What does this map mean?"}
-        </a>
+        <Link href="/map-info">
+          <a className={linkStyle}>
+            <HelpIcon className={"mr-1"} />
+            {"What does this map mean?"}
+          </a>
+        </Link>
       </Paper>
     </>
   );

@@ -96,7 +96,7 @@ const DAQI: NextPage = () => {
             className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
-            Defra's DAQI information page
+            Defra&apos;s DAQI information page
           </a>{" "}
           and the{" "}
           <a
@@ -104,7 +104,7 @@ const DAQI: NextPage = () => {
             className={linkStyle}
           >
             <InfoIcon className="w-5 h-5 mr-1" />
-            Met Office's air quality information page
+            Met Office&apos;s air quality information page
           </a>
           .
         </Typography>

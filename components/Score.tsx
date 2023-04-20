@@ -19,6 +19,7 @@ import {
 } from "../utils";
 import InfoIcon from "@mui/icons-material/Info";
 import HelpIcon from "@mui/icons-material/Help";
+import Link from "next/link";
 
 export default function Score({ score }) {
   let highest = Object.entries(score).reduce((highest, [pollutant, info]) => {
@@ -28,8 +29,8 @@ export default function Score({ score }) {
         pollutant: highest[0],
         colour: daqiColourMap[highest[1].daqi].colour,
         risk: daqiColourMap[highest[1].daqi].risk,
-      }
-    };
+      };
+    }
     return highest.daqi > info.daqi
       ? highest
       : {
@@ -171,10 +172,12 @@ export default function Score({ score }) {
       </div>
       <div className={"flex-grow"} />{" "}
       {/* used to stick content to bottom of container */}
-      <a href="/daqi" className={linkStyle}>
-        <HelpIcon className={"mr-1"} />
-        {"What is the Air Quality Index?"}
-      </a>
+      <Link href="/daqi">
+        <a className={linkStyle}>
+          <HelpIcon className={"mr-1"} />
+          {"What is the Air Quality Index?"}
+        </a>
+      </Link>
     </Paper>
   );
 }
