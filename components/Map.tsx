@@ -504,7 +504,7 @@ const Map = ({ combinedData, mapboxToken }: MapProps) => {
             {contextualData[0].windspeed && (
               <div className="max-h-32 mb-5">
                 <Typography variant="body1">
-                  <strong>Windspeed (m/s)</strong>
+                  <strong>Wind speed (m/s)</strong>
                 </Typography>
                 <Bar
                   data={chartData}
